@@ -1,5 +1,6 @@
 package com.hyxiao.core;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.hyxiao.config.LoaderConfig;
 import com.hyxiao.model.Message;
 import com.hyxiao.model.Payload;
@@ -15,7 +16,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Collections;
+import java.util.List;
 
 /**
  * WebSocketFrameHandler 继承自 SimpleChannelInboundHandler，用于处理WebSocket帧。
@@ -46,7 +47,11 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocket
             payload.setStream(true);
             String apiKeys = config.getApiKeys();
             String proxyUrl = config.getProxyUrl() + "/v1/chat/completions";
-            payload.setMessages(Collections.singletonList(new Message("user", message)));
+
+            JsonNode jsonNode = JsonUtil.readObject(message);
+            String conversation = jsonNode.get("conversation").toString();
+            List<Message> messages = JsonUtil.toObjectList(conversation, Message.class);
+            payload.setMessages(messages);
 
             HttpResponse httpResponse = HttpUtil.requestOpenAI(JsonUtil.toJson(payload), proxyUrl, apiKeys);
 

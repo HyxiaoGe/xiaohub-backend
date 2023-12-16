@@ -1,14 +1,23 @@
 package com.hyxiao.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hyxiao.model.Message;
 
 import java.io.IOException;
+import java.util.List;
 
 public class JsonUtil {
 
     public static final ObjectMapper objectMapper = new ObjectMapper();
+
+
+    public static JsonNode readObject(String str) throws JsonProcessingException {
+        return JsonUtil.objectMapper.readTree(str);
+    }
 
     /**
      * 将对象转换为JSON字符串
@@ -32,11 +41,22 @@ public class JsonUtil {
      * @param <T>   对象类型
      * @return 对象
      */
+    // 用于处理单个对象
     public static <T> T toObject(String json, Class<T> clazz) {
         try {
             return objectMapper.readValue(json, clazz);
         } catch (JsonProcessingException e) {
             throw new RuntimeException("JSON字符串转换为对象时发生错误", e);
+        }
+    }
+
+    // 用于处理对象列表
+    public static <T> List<T> toObjectList(String json, Class<T> elementClass) {
+        try {
+            JavaType javaType = objectMapper.getTypeFactory().constructCollectionType(List.class, elementClass);
+            return objectMapper.readValue(json, javaType);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("JSON字符串转换为对象列表时发生错误", e);
         }
     }
 
