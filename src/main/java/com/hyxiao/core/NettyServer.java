@@ -3,10 +3,17 @@ package com.hyxiao.core;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class NettyServer {
 
-    public void start(int port) throws Exception {
+    public static final Logger log =
+            LoggerFactory.getLogger(NettyServer.class);
+
+    public void start() throws Exception {
+
+        log.info("Netty Server started successfully!!!");
 
         //  创建两个 EventLoopGroup 对象
         //  masterGroup 通常用来接收客户端的TCP连接
@@ -24,7 +31,7 @@ public class NettyServer {
 
             //  绑定端口，开始接收进来的连接
             serverBootstrap
-                    .bind(port) //  绑定服务器到指定的端口并开始监听
+                    .bind(8088) //  绑定服务器到指定的端口并开始监听
                     .sync()     //  方法会堵塞，直到绑定操作完成。
                     .channel()
                     .closeFuture()
@@ -38,9 +45,6 @@ public class NettyServer {
         }
     }
 
-    public static void main(String[] args) throws Exception {
-        int port = 8088;    // 确保这个端口没有被其他服务占用
-        new NettyServer().start(port);
-    }
+
 
 }

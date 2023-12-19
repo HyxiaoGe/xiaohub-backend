@@ -11,17 +11,23 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import org.apache.http.HttpResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.HashMap;
 import java.util.List;
 
 /**
  * WebSocketFrameHandler 继承自 SimpleChannelInboundHandler，用于处理WebSocket帧。
  */
 public class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocketFrame> {
+
+    public static final Logger log =
+            LoggerFactory.getLogger(WebSocketFrameHandler.class);
 
     private LoaderConfig config = new LoaderConfig();
 
@@ -37,7 +43,8 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocket
         if (webSocketFrame instanceof TextWebSocketFrame) {
             TextWebSocketFrame textWebSocketFrame = (TextWebSocketFrame) webSocketFrame;
             String message = textWebSocketFrame.text();
-            System.out.println("WebSocket Received Message: " + message);
+
+            log.info("WebSocket Received Message: {}", message);
 
             // Create Payload
             Payload payload = new Payload();
