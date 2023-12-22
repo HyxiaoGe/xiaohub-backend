@@ -1,36 +1,38 @@
 package com.hyxiao.util;
 
 import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.conn.ConnectionKeepAliveStrategy;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.message.BasicHeader;
+import org.apache.http.ssl.SSLContexts;
+
+import javax.net.ssl.SSLContext;
+import java.security.cert.X509Certificate;
 
 public class HttpUtil {
 
-    private static final CloseableHttpClient httpClient;
+    // 创建一个忽略所有证书的 HttpClient 实例
+    private static final CloseableHttpClient httpClient = createClientAcceptsUntrustedCerts();
 
-    static {
-        // 创建连接池管理器
-        PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
-        connectionManager.setMaxTotal(100); //  设置最大连接数
-        connectionManager.setDefaultMaxPerRoute(10);    //  设置每个路由的默认最大连接数
-        // 设置连接保持活跃的策略
-        ConnectionKeepAliveStrategy keepAliveStrategy = (response, context) -> 60000;   // 保持活跃60秒
-        // 设置请求配置
-        RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(30 * 1000).setConnectionRequestTimeout(30 * 1000).setSocketTimeout(60 * 1000).build();
+    private static CloseableHttpClient createClientAcceptsUntrustedCerts() {
+        try {
+            // 信任自签名和所有主机名的策略
+            TrustStrategy acceptingTrustStrategy = (X509Certificate[] chain, String authType) -> true;
+            SSLContext sslContext = SSLContexts.custom()
+                    .loadTrustMaterial(null, acceptingTrustStrategy)
+                    .build();
 
-        httpClient = HttpClients.custom()
-                .setConnectionManager(connectionManager)
-                .setKeepAliveStrategy(keepAliveStrategy)
-                .setDefaultRequestConfig(requestConfig)
-                .setRetryHandler((exception, executionCount, context) -> executionCount <= 3)
-                .build();
+            return HttpClients.custom()
+                    .setSSLContext(sslContext)
+                    .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE) // 关闭主机名验证
+                    .build();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static HttpResponse requestOpenAI(String payload, String proxyUrl, String apiKeys) throws Exception {
