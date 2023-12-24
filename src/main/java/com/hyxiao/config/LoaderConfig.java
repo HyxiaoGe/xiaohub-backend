@@ -41,4 +41,12 @@ public class LoaderConfig {
         return properties.getProperty("apiKeys");
     }
 
+    public String getAESKey() {
+        return properties.getProperty("AESKEY");
+    }
+
+    public String getSecretKey() {
+        return properties.getProperty("secretKey");
+    }
+
 }
