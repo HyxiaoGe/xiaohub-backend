@@ -13,7 +13,9 @@ public class AESUtil {
 
     public static String encrypt(String key, String data) throws Exception {
         KeyGenerator keyGenerator = KeyGenerator.getInstance(ALGORITHM);
-        keyGenerator.init(KEY_SIZE, new SecureRandom(key.getBytes()));
+        SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
+        secureRandom.setSeed(key.getBytes());
+        keyGenerator.init(KEY_SIZE, secureRandom);
         SecretKey secretKey = keyGenerator.generateKey();
         Cipher cipher = Cipher.getInstance(ALGORITHM);
         cipher.init(Cipher.ENCRYPT_MODE, secretKey);
@@ -23,7 +25,9 @@ public class AESUtil {
 
     public static String decrypt(String key, String encryptedData) throws Exception {
         KeyGenerator keyGenerator = KeyGenerator.getInstance(ALGORITHM);
-        keyGenerator.init(KEY_SIZE, new SecureRandom(key.getBytes()));
+        SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
+        secureRandom.setSeed(key.getBytes());
+        keyGenerator.init(KEY_SIZE, secureRandom);
         SecretKey secretKey = keyGenerator.generateKey();
         Cipher cipher = Cipher.getInstance(ALGORITHM);
         cipher.init(Cipher.DECRYPT_MODE, secretKey);
