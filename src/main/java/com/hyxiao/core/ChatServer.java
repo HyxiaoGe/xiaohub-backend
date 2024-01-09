@@ -6,14 +6,14 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class NettyServer {
+public class ChatServer {
 
     public static final Logger log =
-            LoggerFactory.getLogger(NettyServer.class);
+            LoggerFactory.getLogger(ChatServer.class);
 
-    public void start() throws Exception {
+    public void start() {
 
-        log.info("Netty Server started successfully!!!");
+        log.info("Chat Server started successfully!!!");
 
         //  创建两个 EventLoopGroup 对象
         //  masterGroup 通常用来接收客户端的TCP连接

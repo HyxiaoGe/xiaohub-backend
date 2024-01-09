@@ -70,7 +70,7 @@
               <createDependencyReducedPom>false</createDependencyReducedPom>
               <transformers>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                  <mainClass>com.hyxiao.NettyApplication</mainClass> <!-- 设置您的主类 -->
+                  <mainClass>com.hyxiao.YunChatApplication</mainClass> <!-- 设置您的主类 -->
                 </transformer>
               </transformers>
               <!-- 添加更多配置，例如过滤资源文件或者包含/排除特定的类和资源 -->
