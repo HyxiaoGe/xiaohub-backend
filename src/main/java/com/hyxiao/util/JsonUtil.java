@@ -14,7 +14,6 @@ public class JsonUtil {
 
     public static final ObjectMapper objectMapper = new ObjectMapper();
 
-
     public static JsonNode readObject(String str) throws JsonProcessingException {
         return JsonUtil.objectMapper.readTree(str);
     }

@@ -8,8 +8,7 @@ import org.slf4j.LoggerFactory;
 
 public class ChatServer {
 
-    public static final Logger log =
-            LoggerFactory.getLogger(ChatServer.class);
+    public static final Logger log = LoggerFactory.getLogger(ChatServer.class);
 
     public void start() {
 
@@ -24,18 +23,13 @@ public class ChatServer {
         try {
             //  serverBootstrap 是一个启动NIO服务的辅助启动类，用于设置服务器
             ServerBootstrap serverBootstrap = new ServerBootstrap();
-            serverBootstrap
-                    .group(masterGroup, workerGroup)
-                    .channel(NioServerSocketChannel.class)  // 设置服务器使用的channel类型，适用于NIO传输。
+            serverBootstrap.group(masterGroup, workerGroup).channel(NioServerSocketChannel.class)  // 设置服务器使用的channel类型，适用于NIO传输。
                     .childHandler(new ServerInitializer()); // 设置自定义处理类，当一个新的连接被接收时会使用的 ChannelInitializer
 
             //  绑定端口，开始接收进来的连接
-            serverBootstrap
-                    .bind(8088) //  绑定服务器到指定的端口并开始监听
+            serverBootstrap.bind(8088) //  绑定服务器到指定的端口并开始监听
                     .sync()     //  方法会堵塞，直到绑定操作完成。
-                    .channel()
-                    .closeFuture()
-                    .sync();
+                    .channel().closeFuture().sync();
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
@@ -44,7 +38,6 @@ public class ChatServer {
             masterGroup.shutdownGracefully();
         }
     }
-
 
 
 }

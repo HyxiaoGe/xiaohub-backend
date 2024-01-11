@@ -14,6 +14,7 @@ public class ServerInitializer extends ChannelInitializer<SocketChannel> {
 
     /**
      * 为新的 SocketChannel 设置了 ChannelPipeline 和各种 ChannelHandler。
+     *
      * @param socketChannel
      * @throws Exception
      */

@@ -8,7 +8,7 @@ public class LoaderConfig {
     public static final String PROP_FILE = "chatgpt.properties";
     private Properties properties;
 
-    public LoaderConfig () {
+    public LoaderConfig() {
         properties = new Properties();
 
         try {
@@ -18,7 +18,8 @@ public class LoaderConfig {
                 return;
             }
             properties.load(inputStream);
-        }catch (Exception ignored){}
+        } catch (Exception ignored) {
+        }
     }
 
     public String getModel() {
