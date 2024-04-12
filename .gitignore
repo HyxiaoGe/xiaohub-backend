@@ -13,6 +13,7 @@ target/
 *.ipr
 
 chatgpt.properties
+discord.properties
 
 ### Eclipse ###
 .apt_generated
