@@ -1,7 +1,7 @@
 package com.hyxiao.core;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.hyxiao.config.LoaderConfig;
+import com.hyxiao.config.LoadOpenAIConfig;
 import com.hyxiao.model.Message;
 import com.hyxiao.model.Payload;
 import com.hyxiao.util.AESUtil;
@@ -19,7 +19,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -29,7 +28,7 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocket
 
     public static final Logger log = LoggerFactory.getLogger(WebSocketFrameHandler.class);
 
-    private LoaderConfig config = new LoaderConfig();
+    private LoadOpenAIConfig config = new LoadOpenAIConfig();
 
     /**
      * 处理从客户端接收的每一个WebSocket帧

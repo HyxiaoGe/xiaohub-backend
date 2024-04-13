@@ -3,12 +3,12 @@ package com.hyxiao.config;
 import java.io.InputStream;
 import java.util.Properties;
 
-public class LoaderConfig {
+public class LoadOpenAIConfig {
 
     public static final String PROP_FILE = "chatgpt.properties";
     private Properties properties;
 
-    public LoaderConfig() {
+    public LoadOpenAIConfig() {
         properties = new Properties();
 
         try {
