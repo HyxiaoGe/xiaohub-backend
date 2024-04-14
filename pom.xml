@@ -41,12 +41,6 @@
       <version>4.5.13</version> <!-- 使用最新版本 -->
     </dependency>
 
-      <dependency>
-        <groupId>com.discord4j</groupId>
-        <artifactId>discord4j-core</artifactId>
-        <version>3.2.6</version>
-      </dependency>
-
     <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind -->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
