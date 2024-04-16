@@ -27,11 +27,4 @@ public class DiscordApi {
                 .block();
     }
 
-    public static void main(String[] args) {
-
-        DiscordApi discordApi = new DiscordApi();
-        discordApi.fetch();
-
-    }
-
 }
