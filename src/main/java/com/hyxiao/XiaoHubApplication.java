@@ -2,7 +2,7 @@ package com.hyxiao;
 
 import com.hyxiao.core.ChatServer;
 
-public class YunChatApplication {
+public class XiaoHubApplication {
     public static void main(String[] args) {
         ChatServer server = new ChatServer();
         try {
