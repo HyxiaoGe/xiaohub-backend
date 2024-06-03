@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    tools {
+            maven 'Maven'
+            jdk 'OpenJDK 11'     // 确保这个 JDK 已在 Jenkins 配置中设置
+    }
+
     stages {
         stage('Checkout') {
             steps {
