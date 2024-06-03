@@ -23,7 +23,7 @@ pipeline {
                 sh 'mvn -v'
             }
         }
-//         stage('Deployment') {
+//         stage('Deployment') { test
 //             steps {
 //                 echo 'Deploying to Nginx directory...'
 //                 sh 'rm -rf /docker/nginx/data/html/xiaohub/*'  // 清理旧文件
