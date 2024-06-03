@@ -1,6 +1,6 @@
-package com.hyxiao;
+package com.xiaohub;
 
-import com.hyxiao.core.ChatServer;
+import com.xiaohub.interactive.chat.ChatServer;
 
 public class XiaoHubApplication {
     public static void main(String[] args) {

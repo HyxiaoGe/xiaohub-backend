@@ -1,4 +1,4 @@
-package com.hyxiao.core;
+package com.xiaohub.interactive.chat;
 
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;

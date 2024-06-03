@@ -1,12 +1,12 @@
-package com.hyxiao.core;
+package com.xiaohub.interactive.chat;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.hyxiao.config.LoadOpenAIConfig;
-import com.hyxiao.model.Message;
-import com.hyxiao.model.Payload;
-import com.hyxiao.util.AESUtil;
-import com.hyxiao.util.HttpUtil;
-import com.hyxiao.util.JsonUtil;
+import com.xiaohub.config.OpenAIConfig;
+import com.xiaohub.interactive.common.model.Message;
+import com.xiaohub.interactive.common.model.Payload;
+import com.xiaohub.interactive.common.util.AESUtil;
+import com.xiaohub.interactive.common.util.HttpUtil;
+import com.xiaohub.interactive.common.util.JsonUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
@@ -28,7 +28,7 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocket
 
     public static final Logger log = LoggerFactory.getLogger(WebSocketFrameHandler.class);
 
-    private LoadOpenAIConfig config = new LoadOpenAIConfig();
+    private OpenAIConfig config = new OpenAIConfig();
 
     /**
      * 处理从客户端接收的每一个WebSocket帧

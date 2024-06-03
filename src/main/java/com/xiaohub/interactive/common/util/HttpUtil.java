@@ -1,4 +1,4 @@
-package com.hyxiao.util;
+package com.xiaohub.interactive.common.util;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;

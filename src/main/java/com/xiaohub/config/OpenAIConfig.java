@@ -1,14 +1,14 @@
-package com.hyxiao.config;
+package com.xiaohub.config;
 
 import java.io.InputStream;
 import java.util.Properties;
 
-public class LoadOpenAIConfig {
+public class OpenAIConfig {
 
     public static final String PROP_FILE = "chatgpt.properties";
     private Properties properties;
 
-    public LoadOpenAIConfig() {
+    public OpenAIConfig() {
         properties = new Properties();
 
         try {

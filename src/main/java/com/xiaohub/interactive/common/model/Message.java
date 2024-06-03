@@ -1,4 +1,4 @@
-package com.hyxiao.model;
+package com.xiaohub.interactive.common.model;
 
 
 public class Message {

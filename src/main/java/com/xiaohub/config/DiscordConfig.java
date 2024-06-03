@@ -1,14 +1,14 @@
-package com.hyxiao.config;
+package com.xiaohub.config;
 
 import java.io.InputStream;
 import java.util.Properties;
 
-public class LoadDiscordConfig {
+public class DiscordConfig {
 
     public static final String PROP_FILE = "discord.properties";
     private Properties properties;
 
-    public LoadDiscordConfig() {
+    public DiscordConfig() {
         properties = new Properties();
 
         try {
