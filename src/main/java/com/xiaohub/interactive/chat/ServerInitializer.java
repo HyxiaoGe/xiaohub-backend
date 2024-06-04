@@ -6,11 +6,14 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * ServerInitializer 继承自 ChannelInitializer，用于初始化新接受的通道。
  */
 public class ServerInitializer extends ChannelInitializer<SocketChannel> {
+    public static final Logger log = LoggerFactory.getLogger(ServerInitializer.class);
 
     /**
      * 为新的 SocketChannel 设置了 ChannelPipeline 和各种 ChannelHandler。
@@ -20,6 +23,7 @@ public class ServerInitializer extends ChannelInitializer<SocketChannel> {
      */
     @Override
     protected void initChannel(SocketChannel socketChannel) throws Exception {
+        log.info("Initializing new channel");
         //  HttpServerCodec: 编解码器，用于将字节解码为HTTP请求和编码HTTP响应
         socketChannel.pipeline().addLast(new HttpServerCodec());
         //  HttpObjectAggregator: 将HTTP消息的多个部分组合成一个完整的HTTP消息

@@ -12,7 +12,7 @@ public class ChatServer {
 
     public void start() {
 
-        log.info("Chat Server started successfully!!!");
+        log.info("Chat Server starting!!!");
 
         //  创建两个 EventLoopGroup 对象
         //  masterGroup 通常用来接收客户端的TCP连接
@@ -25,7 +25,7 @@ public class ChatServer {
             ServerBootstrap serverBootstrap = new ServerBootstrap();
             serverBootstrap.group(masterGroup, workerGroup).channel(NioServerSocketChannel.class)  // 设置服务器使用的channel类型，适用于NIO传输。
                     .childHandler(new ServerInitializer()); // 设置自定义处理类，当一个新的连接被接收时会使用的 ChannelInitializer
-
+            log.info("binding port");
             //  绑定端口，开始接收进来的连接
             serverBootstrap.bind(8888) //  绑定服务器到指定的端口并开始监听
                     .sync()     //  方法会堵塞，直到绑定操作完成。
