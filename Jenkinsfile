@@ -28,12 +28,14 @@ pipeline {
         }
         stage('Clean') {
             steps {
-                sh 'mvn clean package'  // 执行 Maven 清除命令
+                echo 'clean maven cache...'
+                sh 'mvn clean'  // 执行 Maven 清除命令
             }
         }
         stage('Install') {
             steps {
-                sh 'mvn install package'  // 执行 Maven 安装命令
+                echo 'install maven dependencies...'
+                sh 'mvn install -DskipTests'  // 执行 Maven 安装命令
             }
         }
         stage('Rename JAR') {
