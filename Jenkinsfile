@@ -21,9 +21,24 @@ pipeline {
                 }
             }
         }
-        stage('Prepare') {
+        stage('Prepare environment') {
             steps {
-                echo 'prepare necessary environment...'
+                script {
+                     echo 'prepare necessary environment...'
+                     // 创建.env 文件，注意使用双引号
+                     writeFile file: 'chatgpt.properties', text: """
+                     VITE_APP_END_POINT=${env.END_POINT}
+                     maxTokens= 800
+                     model= gpt-4o
+                     temperature= 0.7
+
+                     proxyUrl = ${env.proxyUrl}
+                     apiKeys = ${env.apiKeys}
+
+                     AESKEY = ${env.AESKEY}
+                     secretKey = ${env.secretKey}
+                     """
+                }
             }
         }
         stage('Clean') {
