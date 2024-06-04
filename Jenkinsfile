@@ -23,19 +23,33 @@ pipeline {
         }
         stage('Prepare') {
             steps {
-                echo 'Checking Java and Maven versions...'
-                sh 'java -version'
-                sh 'mvn -v'
+                echo 'prepare necessary environment...'
             }
         }
-//         stage('Deployment') { test
-//             steps {
-//                 echo 'Deploying to Nginx directory...'
-//                 sh 'rm -rf /docker/nginx/data/html/xiaohub/*'  // 清理旧文件
-//                 sh 'cp -r dist/* /docker/nginx/data/html/xiaohub/'  // 复制新文件
-//                 sh 'sudo docker restart nginx'  // 重载 Nginx
-//             }
-//         }
+        stage('Clean') {
+            steps {
+                sh 'mvn clean package'  // 执行 Maven 清除命令
+            }
+        }
+        stage('Install') {
+            steps {
+                sh 'mvn install package'  // 执行 Maven 安装命令
+            }
+        }
+        stage('Rename JAR') {
+            steps {
+                sh 'mv target/xiaohub-backend-1.0-SNAPSHOT-shaded.jar target/xiaohub.jar'
+            }
+        }
+        stage('Deploy') {
+            steps {
+                echo 'Deploying to xiaohub directory...'
+                sh 'if [ -f /home/xiaohub/xiaohub.jar ]; then rm -rf /home/xiaohub/xiaohub.jar; fi'  // 仅在文件存在时删除
+                sh 'cp target/xiaohub.jar /home/xiaohub/xiaohub.jar'  // 复制新文件
+                sh 'chmod +x /home/xiaohub/restart.sh'  // 确保脚本具有执行权限
+                sh '/home/xiaohub/restart.sh'  // 执行重启脚本
+            }
+        }
     }
     post {
         success {
