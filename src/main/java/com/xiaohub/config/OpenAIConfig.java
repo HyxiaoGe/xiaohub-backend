@@ -1,6 +1,5 @@
 package com.xiaohub.config;
 
-import com.xiaohub.interactive.chat.WebSocketFrameHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,6 +18,7 @@ public class OpenAIConfig {
 
         try {
             InputStream inputStream = getClass().getClassLoader().getResourceAsStream(PROP_FILE);
+            log.info("inputStream: {}", inputStream);
             if (inputStream == null) {
                 log.error("无法找到: {}", PROP_FILE);
                 return;
