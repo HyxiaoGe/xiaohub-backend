@@ -18,13 +18,11 @@ public class OpenAIConfig {
 
         try {
             InputStream inputStream = getClass().getClassLoader().getResourceAsStream(PROP_FILE);
-            log.info("inputStream: {}", inputStream);
             if (inputStream == null) {
                 log.error("无法找到: {}", PROP_FILE);
                 return;
             }
             properties.load(inputStream);
-            log.info("OpenAIConfig loaded: {}", properties.toString());
         } catch (Exception ignored) {
         }
     }
