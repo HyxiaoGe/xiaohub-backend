@@ -26,7 +26,7 @@ pipeline {
                 script {
                      echo 'prepare necessary environment...'
                      // 创建.env 文件，注意使用双引号
-                     writeFile file: 'chatgpt.properties', text: """
+                     writeFile file: 'src/main/resources/chatgpt.properties', text: """
                      VITE_APP_END_POINT=${env.END_POINT}
                      maxTokens= 800
                      model= gpt-4o
