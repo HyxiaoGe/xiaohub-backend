@@ -1,5 +1,9 @@
 package com.xiaohub.config;
 
+import com.xiaohub.interactive.chat.WebSocketFrameHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.InputStream;
 import java.util.Properties;
 
@@ -7,6 +11,8 @@ public class OpenAIConfig {
 
     public static final String PROP_FILE = "chatgpt.properties";
     private Properties properties;
+
+    public static final Logger log = LoggerFactory.getLogger(OpenAIConfig.class);
 
     public OpenAIConfig() {
         properties = new Properties();
@@ -18,6 +24,7 @@ public class OpenAIConfig {
                 return;
             }
             properties.load(inputStream);
+            log.info("OpenAIConfig loaded: {}", properties.toString());
         } catch (Exception ignored) {
         }
     }
