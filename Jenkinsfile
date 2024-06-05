@@ -11,8 +11,8 @@ pipeline {
             steps {
                 script {
                     // 使用 retry 和 timeout 包裹 Git 命令
-                    retry(3) {  // 如果命令失败，最多重试3次
-                        timeout(time: 5, unit: 'MINUTES') {  // 单次尝试最大持续5分钟
+                    retry(5) {  // 如果命令失败，最多重试5次
+                        timeout(time: 10, unit: 'MINUTES') {  // 单次尝试最大持续10分钟
                             git branch: 'master',
                                 url: 'https://github.com/HyxiaoGe/xiaohub-backend.git',
                                 credentialsId: 'login_credentials'
