@@ -23,7 +23,6 @@ public class ServerInitializer extends ChannelInitializer<SocketChannel> {
      */
     @Override
     protected void initChannel(SocketChannel socketChannel) throws Exception {
-        log.info("Initializing new channel");
         //  HttpServerCodec: 编解码器，用于将字节解码为HTTP请求和编码HTTP响应
         socketChannel.pipeline().addLast(new HttpServerCodec());
         //  HttpObjectAggregator: 将HTTP消息的多个部分组合成一个完整的HTTP消息

@@ -39,7 +39,6 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocket
      */
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, WebSocketFrame webSocketFrame) throws Exception {
-        log.info("Received a new WebSocket frame");
         // 判断接收的是否为文本帧
         if (webSocketFrame instanceof TextWebSocketFrame) {
             TextWebSocketFrame textWebSocketFrame = (TextWebSocketFrame) webSocketFrame;
@@ -54,7 +53,6 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocket
                     channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame("failure"));
                 }
             } else if ("session".equals(action)) {
-                log.info("Received a new session request, currentModel: {}", config.getModel());
                 Payload payload = new Payload();
                 payload.setModel(config.getModel());
                 payload.setTemperature(config.getTemperature());
