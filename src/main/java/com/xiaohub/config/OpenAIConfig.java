@@ -20,7 +20,7 @@ public class OpenAIConfig {
         try {
             InputStream inputStream = getClass().getClassLoader().getResourceAsStream(PROP_FILE);
             if (inputStream == null) {
-                System.out.println("无法找到 " + PROP_FILE);
+                log.error("无法找到: {}", PROP_FILE);
                 return;
             }
             properties.load(inputStream);
