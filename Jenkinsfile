@@ -61,10 +61,10 @@ pipeline {
         stage('Deploy') {
             steps {
                 echo 'Deploying to xiaohub directory...'
-                sh 'if [ -f /home/xiaohub/xiaohub.jar ]; then rm -rf /home/xiaohub/xiaohub.jar; fi'  // 仅在文件存在时删除
-                sh 'cp target/xiaohub.jar /home/xiaohub/xiaohub.jar'  // 复制新文件
-                sh 'chmod +x /home/xiaohub/restart.sh'  // 确保脚本具有执行权限
-                sh '/home/xiaohub/restart.sh'  // 执行重启脚本
+                sh 'if [ -f /home/xiaohub/xiaohub.jar ]; then sudo rm -rf /home/xiaohub/xiaohub.jar; fi'  // 仅在文件存在时删除
+                sh 'sudo cp target/xiaohub.jar /home/xiaohub/xiaohub.jar'  // 复制新文件
+                sh 'sudo chmod +x /home/xiaohub/restart.sh'  // 确保脚本具有执行权限
+                sh 'sudo /home/xiaohub/restart.sh'  // 执行重启脚本
             }
         }
     }
