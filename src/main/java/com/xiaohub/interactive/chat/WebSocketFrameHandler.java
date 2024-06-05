@@ -53,6 +53,8 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocket
                     channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame("failure"));
                 }
             } else if ("session".equals(action)) {
+                log.info("model:{}, temperature:{}, maxToken:{}", config.getModel(), config.getTemperature(), config.getMaxTokens());
+                log.info("proxyUrl:{}, apiKeys:{}", config.getProxyUrl(), config.getApiKeys());
                 Payload payload = new Payload();
                 payload.setModel(config.getModel());
                 payload.setTemperature(config.getTemperature());
