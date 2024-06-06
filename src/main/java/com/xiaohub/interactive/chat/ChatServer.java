@@ -19,7 +19,6 @@ public class ChatServer {
             ServerBootstrap serverBootstrap = new ServerBootstrap();
             serverBootstrap.group(masterGroup, workerGroup).channel(NioServerSocketChannel.class)
                     .childHandler(new ServerInitializer());
-            //  绑定端口，开始接收进来的连接
             serverBootstrap.bind(8808)
                     .sync()
                     .channel().closeFuture().sync();
