@@ -70,6 +70,7 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocket
                     BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
                     String line;
                     while ((line = reader.readLine()) != null) {
+                        log.info("line:{}", line);
                         if (line.startsWith("data: ") && !line.contains("[DONE]")) {
                             // 移除前缀，获取纯粹的JSON字符串
                             String json = line.substring("data: ".length());
