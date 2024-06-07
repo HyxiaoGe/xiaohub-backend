@@ -1,14 +1,19 @@
 package com.xiaohub.interactive.common.model;
 
+import com.xiaohub.interactive.common.model.request.Content;
+import com.xiaohub.interactive.common.util.JsonUtil;
+
+import java.io.IOException;
+import java.util.List;
 
 public class Message {
     private String role;
-    private String content;
+    private List<Content> content;
 
     public Message() {
     }
 
-    public Message(String role, String content) {
+    public Message(String role, List<Content> content) {
         this.role = role;
         this.content = content;
     }
@@ -21,11 +26,15 @@ public class Message {
         this.role = role;
     }
 
-    public String getContent() {
+    public List<Content> getContent() {
         return content;
     }
 
-    public void setContent(String content) {
+    public void setContent(List<Content> content) {
         this.content = content;
+    }
+
+    public void setContent(String content) throws IOException {
+        this.content = JsonUtil.toObjectList(content, Content.class);
     }
 }

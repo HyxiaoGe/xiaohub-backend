@@ -48,10 +48,10 @@ public class JsonUtil {
     }
 
     // 用于处理对象列表
-    public static <T> List<T> toObjectList(String json, Class<T> elementClass) {
+    public static <T> List<T> toObjectList(String json, Class<T> clazz) {
         try {
-            JavaType javaType = objectMapper.getTypeFactory().constructCollectionType(List.class, elementClass);
-            return objectMapper.readValue(json, javaType);
+            return objectMapper.readValue(json,
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, clazz));
         } catch (JsonProcessingException e) {
             throw new RuntimeException("JSON字符串转换为对象列表时发生错误", e);
         }

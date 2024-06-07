@@ -4,6 +4,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.xiaohub.config.OpenAIConfig;
 import com.xiaohub.interactive.common.model.Message;
 import com.xiaohub.interactive.common.model.Payload;
+import com.xiaohub.interactive.common.model.request.Content;
+import com.xiaohub.interactive.common.model.request.ImageUrl;
+import com.xiaohub.interactive.common.model.request.ImageContent;
 import com.xiaohub.interactive.common.util.AESUtil;
 import com.xiaohub.interactive.common.util.HttpUtil;
 import com.xiaohub.interactive.common.util.JsonUtil;
@@ -20,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * WebSocketFrameHandler 继承自 SimpleChannelInboundHandler，用于处理WebSocket帧。
@@ -42,10 +46,10 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocket
         // 判断接收的是否为文本帧
         if (webSocketFrame instanceof TextWebSocketFrame) {
             TextWebSocketFrame textWebSocketFrame = (TextWebSocketFrame) webSocketFrame;
-            JsonNode messageJson = JsonUtil.readObject(textWebSocketFrame.text());
-            String action = messageJson.get("action").asText();
+            JsonNode contentJson = JsonUtil.readObject(textWebSocketFrame.text());
+            String action = contentJson.get("action").asText();
             if ("verify".equals(action)) {
-                String secretKey = messageJson.get("secretKey").asText();
+                String secretKey = contentJson.get("secretKey").asText();
                 boolean isVerified = validateKey(secretKey);
                 if (isVerified) {
                     channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame("success"));
@@ -60,9 +64,7 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocket
                 payload.setStream(true);
                 String apiKeys = config.getApiKeys();
                 String proxyUrl = config.getProxyUrl() + "/v1/chat/completions";
-                String conversation = messageJson.get("conversation").toString();
-                log.info("conversation:{}", conversation);
-                List<Message> messages = JsonUtil.toObjectList(conversation, Message.class);
+                List<Message> messages = parseContent(contentJson);
                 payload.setMessages(messages);
 
                 HttpResponse httpResponse = HttpUtil.requestOpenAI(JsonUtil.toJson(payload), proxyUrl, apiKeys);
@@ -70,6 +72,7 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocket
                     BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
                     String line;
                     while ((line = reader.readLine()) != null) {
+                        log.info("line is: " + line);
                         if (line.startsWith("data: ") && !line.contains("[DONE]")) {
                             // 移除前缀，获取纯粹的JSON字符串
                             String json = line.substring("data: ".length());
@@ -89,6 +92,38 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocket
                 }
             }
         }
+    }
+
+    private List<Message> parseContent(JsonNode contentJson) {
+        if (!contentJson.get("file").isNull()) {
+            return populateMessagesWithImageUrl(contentJson);
+        } else {
+            String conversation = contentJson.get("conversation").toString();
+            return JsonUtil.toObjectList(conversation, Message.class);
+        }
+    }
+
+    private static List<Message> populateMessagesWithImageUrl(JsonNode contentJson) {
+        String imgBase64Url = contentJson.get("file").asText();
+        String conversation = contentJson.get("conversation").toString();
+        List<Message> messages = JsonUtil.toObjectList(conversation, Message.class);
+        // 获取最后一个role为user的Message
+        Message message = null;
+        for (int i = messages.size() - 1; i >= 0; i--) {
+            if ("user".equals(messages.get(i).getRole())) {
+                message = messages.get(i);
+                break;
+            }
+        }
+        ImageContent imageContent = new ImageContent();
+        ImageUrl image_url = new ImageUrl();
+        image_url.setUrl(imgBase64Url);
+        imageContent.setImage_url(image_url);
+
+        List<Content> contentList = message.getContent();
+        contentList.add(imageContent);
+        message.setContent(contentList);
+        return messages;
     }
 
     /**
