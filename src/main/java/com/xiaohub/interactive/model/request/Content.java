@@ -1,4 +1,4 @@
-package com.xiaohub.interactive.common.model.request;
+package com.xiaohub.interactive.model.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;

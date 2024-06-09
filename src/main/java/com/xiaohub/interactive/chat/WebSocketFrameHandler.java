@@ -2,14 +2,14 @@ package com.xiaohub.interactive.chat;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.xiaohub.config.OpenAIConfig;
-import com.xiaohub.interactive.common.model.Message;
-import com.xiaohub.interactive.common.model.Payload;
-import com.xiaohub.interactive.common.model.request.Content;
-import com.xiaohub.interactive.common.model.request.ImageUrl;
-import com.xiaohub.interactive.common.model.request.ImageContent;
-import com.xiaohub.interactive.common.util.AESUtil;
-import com.xiaohub.interactive.common.util.HttpUtil;
-import com.xiaohub.interactive.common.util.JsonUtil;
+import com.xiaohub.interactive.model.Message;
+import com.xiaohub.interactive.model.Payload;
+import com.xiaohub.interactive.model.request.Content;
+import com.xiaohub.interactive.model.request.ImageUrl;
+import com.xiaohub.interactive.model.request.ImageContent;
+import com.xiaohub.util.AESUtil;
+import com.xiaohub.util.HttpUtil;
+import com.xiaohub.util.JsonUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * WebSocketFrameHandler 继承自 SimpleChannelInboundHandler，用于处理WebSocket帧。
@@ -72,7 +71,6 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocket
                     BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
                     String line;
                     while ((line = reader.readLine()) != null) {
-                        log.info("line is: " + line);
                         if (line.startsWith("data: ") && !line.contains("[DONE]")) {
                             // 移除前缀，获取纯粹的JSON字符串
                             String json = line.substring("data: ".length());
@@ -95,9 +93,11 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocket
     }
 
     private List<Message> parseContent(JsonNode contentJson) {
+        //  图片消息
         if (!contentJson.get("file").isNull()) {
             return populateMessagesWithImageUrl(contentJson);
         } else {
+            // 文本消息
             String conversation = contentJson.get("conversation").toString();
             return JsonUtil.toObjectList(conversation, Message.class);
         }

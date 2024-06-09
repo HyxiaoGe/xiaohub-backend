@@ -1,4 +1,4 @@
-package com.xiaohub.interactive.common.model.request;
+package com.xiaohub.interactive.model.request;
 
 public class ImageContent extends Content {
     private ImageUrl image_url;

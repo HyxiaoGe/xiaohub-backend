@@ -1,4 +1,4 @@
-package com.xiaohub.interactive.common.util;
+package com.xiaohub.util;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;

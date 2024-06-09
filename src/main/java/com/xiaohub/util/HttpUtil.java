@@ -1,4 +1,4 @@
-package com.xiaohub.interactive.common.util;
+package com.xiaohub.util;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.config.RequestConfig;

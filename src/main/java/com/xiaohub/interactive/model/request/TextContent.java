@@ -1,4 +1,4 @@
-package com.xiaohub.interactive.common.model.request;
+package com.xiaohub.interactive.model.request;
 
 public class TextContent extends Content {
     private String text;

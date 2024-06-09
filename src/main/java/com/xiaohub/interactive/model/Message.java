@@ -1,7 +1,7 @@
-package com.xiaohub.interactive.common.model;
+package com.xiaohub.interactive.model;
 
-import com.xiaohub.interactive.common.model.request.Content;
-import com.xiaohub.interactive.common.util.JsonUtil;
+import com.xiaohub.interactive.model.request.Content;
+import com.xiaohub.util.JsonUtil;
 
 import java.io.IOException;
 import java.util.List;

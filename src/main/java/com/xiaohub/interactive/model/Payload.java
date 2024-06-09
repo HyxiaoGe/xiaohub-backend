@@ -1,4 +1,4 @@
-package com.xiaohub.interactive.common.model;
+package com.xiaohub.interactive.model;
 
 import java.util.List;
 
