@@ -56,15 +56,6 @@ public class JsonUtil {
         }
     }
 
-    public static String getResourceContent(String jsonResponse) throws IOException {
-        JsonNode rootNode = objectMapper.readTree(jsonResponse);
-        JsonNode choicesNode = rootNode.path("choices");
-        if (choicesNode.isArray() && choicesNode.has(0)) {
-            return choicesNode.findValue("message").get("content").asText();
-        }
-        return "";
-    }
-
     public static String getStreamContent(String jsonResponse) throws IOException {
         JsonNode jsonNode = objectMapper.readTree(jsonResponse);
         JsonNode choices = jsonNode.path("choices");

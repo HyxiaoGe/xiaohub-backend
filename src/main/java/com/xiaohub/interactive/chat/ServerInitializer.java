@@ -16,13 +16,12 @@ public class ServerInitializer extends ChannelInitializer<SocketChannel> {
      * 为新的 SocketChannel 设置了 ChannelPipeline 和各种 ChannelHandler。
      *
      * @param socketChannel
-     * @throws Exception
      */
     @Override
-    protected void initChannel(SocketChannel socketChannel) throws Exception {
+    protected void initChannel(SocketChannel socketChannel) {
         //  HttpServerCodec: 编解码器，用于将字节解码为HTTP请求和编码HTTP响应
         socketChannel.pipeline().addLast(new HttpServerCodec());
-        //  HttpObjectAggregator: 将HTTP消息的多个部分组合成一个完整的HTTP消息 （限制为 256KB）
+        //  HttpObjectAggregator: 将HTTP消息的多个部分组合成一个完整的HTTP消息 （限制为 256KB * 1024 = 262144）
         socketChannel.pipeline().addLast(new HttpObjectAggregator(262144));
         //  ChunkedWriteHandler: 用于异步写大的数据流（例如文件的内容）
         socketChannel.pipeline().addLast(new ChunkedWriteHandler());
