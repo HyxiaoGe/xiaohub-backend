@@ -11,7 +11,7 @@ public class ChatServer {
     public static final Logger log = LoggerFactory.getLogger(ChatServer.class);
 
     public void start() {
-        log.info("Chat Server starting!!!");
+        log.info("Chat Server starting!!! ");
         NioEventLoopGroup masterGroup = new NioEventLoopGroup();
         NioEventLoopGroup workerGroup = new NioEventLoopGroup();
 
