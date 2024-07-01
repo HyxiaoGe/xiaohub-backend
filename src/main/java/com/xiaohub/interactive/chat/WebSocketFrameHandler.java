@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.xiaohub.config.OpenAIConfig;
 import com.xiaohub.interactive.model.Message;
 import com.xiaohub.interactive.model.Payload;
+import com.xiaohub.interactive.model.SimpleMessage;
 import com.xiaohub.interactive.model.request.Content;
 import com.xiaohub.interactive.model.request.ImageUrl;
 import com.xiaohub.interactive.model.request.ImageContent;
@@ -22,6 +23,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -47,13 +49,20 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocket
             TextWebSocketFrame textWebSocketFrame = (TextWebSocketFrame) webSocketFrame;
             JsonNode contentJson = JsonUtil.readObject(textWebSocketFrame.text());
             String action = contentJson.get("action").asText();
+            String content = "";
+            Integer sessionId = -1;
+            SimpleMessage simpleMessage = new SimpleMessage(sessionId, content);
             if ("verify".equals(action)) {
                 String secretKey = contentJson.get("secretKey").asText();
                 boolean isVerified = validateKey(secretKey);
                 if (isVerified) {
-                    channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame("success"));
+                    simpleMessage.setContent("success");
+                    String rspContent = JsonUtil.toJson(simpleMessage);
+                    channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(rspContent));
                 } else {
-                    channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame("failure"));
+                    simpleMessage.setContent("failure");
+                    String rspContent = JsonUtil.toJson(simpleMessage);
+                    channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(rspContent));
                 }
             } else if ("session".equals(action)) {
                 Payload payload = new Payload();
@@ -63,9 +72,14 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocket
                 payload.setStream(true);
                 String apiKeys = config.getApiKeys();
                 String proxyUrl = config.getProxyUrl() + "/v1/chat/completions";
-                List<Message> messages = parseContent(contentJson);
+                List<Message> messages;
+                try {
+                    messages = parseContent(contentJson);
+                } catch (Exception e) {
+                    channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame("系统当前繁忙，请稍后重试！！！"));
+                    throw new RuntimeException(e);
+                }
                 payload.setMessages(messages);
-
                 HttpResponse httpResponse = HttpUtil.requestOpenAI(JsonUtil.toJson(payload), proxyUrl, apiKeys);
                 try (InputStream inputStream = httpResponse.getEntity().getContent()) {
                     BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
@@ -74,17 +88,22 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocket
                         if (line.startsWith("data: ") && !line.contains("[DONE]")) {
                             // 移除前缀，获取纯粹的JSON字符串
                             String json = line.substring("data: ".length());
-                            String content = JsonUtil.getStreamContent(json);
+                            sessionId = contentJson.get("sessionId").asInt();
+                            content = JsonUtil.getStreamContent(json);
                             //  为了前端渲染地更加自然，加了50ms的延迟
                             Thread.sleep(50);
                             // 立即将数据发送给WebSocket客户端
-                            channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(content));
+                            simpleMessage = new SimpleMessage(sessionId, content);
+                            String rspContent = JsonUtil.toJson(simpleMessage);
+                            channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(rspContent));
                         } else if (line.contains("[DONE]")) {
                             String done = line.substring(line.indexOf(":") + 1).trim();
-                            channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(done));
+                            simpleMessage = new SimpleMessage(sessionId, done);
+                            String rspContent = JsonUtil.toJson(simpleMessage);
+                            channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(rspContent));
                         }
                     }
-                } catch (IOException e) {
+                } catch (Exception e) {
                     // 异常处理
                     throw new RuntimeException("Error while reading the stream", e);
                 }
