@@ -1,5 +1,6 @@
-package com.xiaohub.interactive.chat;
+package com.xiaohub.interactive.chat.initializer;
 
+import com.xiaohub.interactive.chat.handler.ChatWebSocketFrameHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
@@ -10,7 +11,7 @@ import io.netty.handler.stream.ChunkedWriteHandler;
 /**
  * ServerInitializer 继承自 ChannelInitializer，用于初始化新接受的通道。
  */
-public class ServerInitializer extends ChannelInitializer<SocketChannel> {
+public class ChatServerInitializer extends ChannelInitializer<SocketChannel> {
 
     /**
      * 为新的 SocketChannel 设置了 ChannelPipeline 和各种 ChannelHandler。
@@ -28,6 +29,6 @@ public class ServerInitializer extends ChannelInitializer<SocketChannel> {
         //  WebSocketServerProtocolHandler: 处理特定于WebSocket的事务，例如握手和帧的控制
         socketChannel.pipeline().addLast(new WebSocketServerProtocolHandler("/ws",  null, true, 262144));
         //  WebSocketFrameHandler 自定义的处理器，用于处理WebSocket
-        socketChannel.pipeline().addLast(new WebSocketFrameHandler());
+        socketChannel.pipeline().addLast(new ChatWebSocketFrameHandler());
     }
 }

@@ -1,13 +1,13 @@
-package com.xiaohub.interactive.model;
+package com.xiaohub.interactive.chat.dto.message;
 
 import java.util.List;
 
 /**
  * 消息体
  */
-public class Payload {
+public class TextPayloadDto {
     private String model;
-    private List<Message> messages;
+    private List<TextMessageDto> textMessageDtos;
     private Double temperature;
     private Integer maxTokens;
     private Boolean stream;
@@ -20,12 +20,12 @@ public class Payload {
         this.model = model;
     }
 
-    public List<Message> getMessages() {
-        return messages;
+    public List<TextMessageDto> getMessages() {
+        return textMessageDtos;
     }
 
-    public void setMessages(List<Message> messages) {
-        this.messages = messages;
+    public void setMessages(List<TextMessageDto> textMessageDtos) {
+        this.textMessageDtos = textMessageDtos;
     }
 
     public Double getTemperature() {

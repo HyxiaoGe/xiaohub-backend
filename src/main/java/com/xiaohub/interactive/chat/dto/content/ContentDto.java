@@ -1,4 +1,4 @@
-package com.xiaohub.interactive.model.request;
+package com.xiaohub.interactive.chat.dto.content;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
@@ -10,16 +10,16 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         property = "type"
 )
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = TextContent.class, name = "text"),
-        @JsonSubTypes.Type(value = ImageContent.class, name = "image_url")
+        @JsonSubTypes.Type(value = TextContentDtoDto.class, name = "text"),
+        @JsonSubTypes.Type(value = ImageContentDtoDto.class, name = "image_url")
 })
-public abstract class Content {
+public abstract class ContentDto {
     @JsonProperty("type")
     private String type;
 
-    public Content() {}
+    public ContentDto() {}
 
-    public Content(String type) {
+    public ContentDto(String type) {
         this.type = type;
     }
 

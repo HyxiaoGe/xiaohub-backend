@@ -1,5 +1,6 @@
 package com.xiaohub.interactive.chat;
 
+import com.xiaohub.interactive.chat.initializer.ChatServerInitializer;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -18,7 +19,7 @@ public class ChatServer {
         try {
             ServerBootstrap serverBootstrap = new ServerBootstrap();
             serverBootstrap.group(masterGroup, workerGroup).channel(NioServerSocketChannel.class)
-                    .childHandler(new ServerInitializer());
+                    .childHandler(new ChatServerInitializer());
             serverBootstrap.bind(8808)
                     .sync()
                     .channel().closeFuture().sync();

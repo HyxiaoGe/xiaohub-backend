@@ -1,4 +1,4 @@
-package com.xiaohub.interactive.model.request;
+package com.xiaohub.interactive.chat.dto.content;
 
 public class ImageUrl {
     private String url;

@@ -1,13 +1,13 @@
-package com.xiaohub.interactive.chat;
+package com.xiaohub.interactive.chat.handler;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.xiaohub.config.OpenAIConfig;
-import com.xiaohub.interactive.model.Message;
-import com.xiaohub.interactive.model.Payload;
-import com.xiaohub.interactive.model.SimpleMessage;
-import com.xiaohub.interactive.model.request.Content;
-import com.xiaohub.interactive.model.request.ImageUrl;
-import com.xiaohub.interactive.model.request.ImageContent;
+import com.xiaohub.interactive.chat.dto.message.TextMessageDto;
+import com.xiaohub.interactive.chat.dto.message.TextPayloadDto;
+import com.xiaohub.interactive.chat.dto.message.BasicMessageDto;
+import com.xiaohub.interactive.chat.dto.content.ContentDto;
+import com.xiaohub.interactive.chat.dto.content.ImageUrl;
+import com.xiaohub.interactive.chat.dto.content.ImageContentDtoDto;
 import com.xiaohub.util.AESUtil;
 import com.xiaohub.util.HttpUtil;
 import com.xiaohub.util.JsonUtil;
@@ -20,18 +20,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.HashMap;
 import java.util.List;
 
 /**
  * WebSocketFrameHandler 继承自 SimpleChannelInboundHandler，用于处理WebSocket帧。
  */
-public class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocketFrame> {
+public class ChatWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocketFrame> {
 
-    public static final Logger log = LoggerFactory.getLogger(WebSocketFrameHandler.class);
+    public static final Logger log = LoggerFactory.getLogger(ChatWebSocketFrameHandler.class);
 
     private OpenAIConfig config = new OpenAIConfig();
 
@@ -51,36 +49,36 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocket
             String action = contentJson.get("action").asText();
             String content = "";
             Integer sessionId = -1;
-            SimpleMessage simpleMessage = new SimpleMessage(sessionId, content);
+            BasicMessageDto basicMessageDto = new BasicMessageDto(sessionId, content);
             if ("verify".equals(action)) {
                 String secretKey = contentJson.get("secretKey").asText();
                 boolean isVerified = validateKey(secretKey);
                 if (isVerified) {
-                    simpleMessage.setContent("success");
-                    String rspContent = JsonUtil.toJson(simpleMessage);
+                    basicMessageDto.setContent("success");
+                    String rspContent = JsonUtil.toJson(basicMessageDto);
                     channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(rspContent));
                 } else {
-                    simpleMessage.setContent("failure");
-                    String rspContent = JsonUtil.toJson(simpleMessage);
+                    basicMessageDto.setContent("failure");
+                    String rspContent = JsonUtil.toJson(basicMessageDto);
                     channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(rspContent));
                 }
             } else if ("session".equals(action)) {
-                Payload payload = new Payload();
-                payload.setModel(config.getModel());
-                payload.setTemperature(config.getTemperature());
-                payload.setMaxTokens(config.getMaxTokens());
-                payload.setStream(true);
+                TextPayloadDto textPayloadDto = new TextPayloadDto();
+                textPayloadDto.setModel(config.getModel());
+                textPayloadDto.setTemperature(config.getTemperature());
+                textPayloadDto.setMaxTokens(config.getMaxTokens());
+                textPayloadDto.setStream(true);
                 String apiKeys = config.getApiKeys();
                 String proxyUrl = config.getProxyUrl() + "/v1/chat/completions";
-                List<Message> messages;
+                List<TextMessageDto> textMessageDtos;
                 try {
-                    messages = parseContent(contentJson);
+                    textMessageDtos = parseContent(contentJson);
                 } catch (Exception e) {
                     channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame("系统当前繁忙，请稍后重试！！！"));
                     throw new RuntimeException(e);
                 }
-                payload.setMessages(messages);
-                HttpResponse httpResponse = HttpUtil.requestOpenAI(JsonUtil.toJson(payload), proxyUrl, apiKeys);
+                textPayloadDto.setMessages(textMessageDtos);
+                HttpResponse httpResponse = HttpUtil.requestOpenAI(JsonUtil.toJson(textPayloadDto), proxyUrl, apiKeys);
                 try (InputStream inputStream = httpResponse.getEntity().getContent()) {
                     BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
                     String line;
@@ -93,13 +91,13 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocket
                             //  为了前端渲染地更加自然，加了50ms的延迟
                             Thread.sleep(50);
                             // 立即将数据发送给WebSocket客户端
-                            simpleMessage = new SimpleMessage(sessionId, content);
-                            String rspContent = JsonUtil.toJson(simpleMessage);
+                            basicMessageDto = new BasicMessageDto(sessionId, content);
+                            String rspContent = JsonUtil.toJson(basicMessageDto);
                             channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(rspContent));
                         } else if (line.contains("[DONE]")) {
                             String done = line.substring(line.indexOf(":") + 1).trim();
-                            simpleMessage = new SimpleMessage(sessionId, done);
-                            String rspContent = JsonUtil.toJson(simpleMessage);
+                            basicMessageDto = new BasicMessageDto(sessionId, done);
+                            String rspContent = JsonUtil.toJson(basicMessageDto);
                             channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(rspContent));
                         }
                     }
@@ -111,38 +109,38 @@ public class WebSocketFrameHandler extends SimpleChannelInboundHandler<WebSocket
         }
     }
 
-    private List<Message> parseContent(JsonNode contentJson) {
+    private List<TextMessageDto> parseContent(JsonNode contentJson) {
         //  图片消息
         if (!contentJson.get("file").isNull()) {
             return populateMessagesWithImageUrl(contentJson);
         } else {
             // 文本消息
             String conversation = contentJson.get("conversation").toString();
-            return JsonUtil.toObjectList(conversation, Message.class);
+            return JsonUtil.toObjectList(conversation, TextMessageDto.class);
         }
     }
 
-    private static List<Message> populateMessagesWithImageUrl(JsonNode contentJson) {
+    private static List<TextMessageDto> populateMessagesWithImageUrl(JsonNode contentJson) {
         String imgBase64Url = contentJson.get("file").asText();
         String conversation = contentJson.get("conversation").toString();
-        List<Message> messages = JsonUtil.toObjectList(conversation, Message.class);
+        List<TextMessageDto> textMessageDtos = JsonUtil.toObjectList(conversation, TextMessageDto.class);
         // 获取最后一个role为user的Message
-        Message message = null;
-        for (int i = messages.size() - 1; i >= 0; i--) {
-            if ("user".equals(messages.get(i).getRole())) {
-                message = messages.get(i);
+        TextMessageDto textMessageDto = null;
+        for (int i = textMessageDtos.size() - 1; i >= 0; i--) {
+            if ("user".equals(textMessageDtos.get(i).getRole())) {
+                textMessageDto = textMessageDtos.get(i);
                 break;
             }
         }
-        ImageContent imageContent = new ImageContent();
+        ImageContentDtoDto imageContentDto = new ImageContentDtoDto();
         ImageUrl image_url = new ImageUrl();
         image_url.setUrl(imgBase64Url);
-        imageContent.setImage_url(image_url);
+        imageContentDto.setImage_url(image_url);
 
-        List<Content> contentList = message.getContent();
-        contentList.add(imageContent);
-        message.setContent(contentList);
-        return messages;
+        List<ContentDto> contentDtoList = textMessageDto.getContent();
+        contentDtoList.add(imageContentDto);
+        textMessageDto.setContent(contentDtoList);
+        return textMessageDtos;
     }
 
     /**
