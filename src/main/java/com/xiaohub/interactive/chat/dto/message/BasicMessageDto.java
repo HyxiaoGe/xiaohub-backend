@@ -1,12 +1,12 @@
-package com.xiaohub.interactive.model;
+package com.xiaohub.interactive.chat.dto.message;
 
-public class SimpleMessage {
+public class BasicMessageDto {
 
     private Integer sessionId;
 
     private String content;
 
-    public SimpleMessage(Integer sessionId, String content) {
+    public BasicMessageDto(Integer sessionId, String content) {
         this.sessionId = sessionId;
         this.content = content;
     }

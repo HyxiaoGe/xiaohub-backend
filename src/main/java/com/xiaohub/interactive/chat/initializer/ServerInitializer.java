@@ -1,5 +1,6 @@
-package com.xiaohub.interactive.chat;
+package com.xiaohub.interactive.chat.initializer;
 
+import com.xiaohub.interactive.chat.handler.WebSocketFrameHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;

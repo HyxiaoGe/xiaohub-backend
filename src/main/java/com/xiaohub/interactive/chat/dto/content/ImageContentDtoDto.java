@@ -1,13 +1,13 @@
-package com.xiaohub.interactive.model.request;
+package com.xiaohub.interactive.chat.dto.content;
 
-public class ImageContent extends Content {
+public class ImageContentDtoDto extends ContentDto {
     private ImageUrl image_url;
 
-    public ImageContent() {
+    public ImageContentDtoDto() {
         super("image_url");
     }
 
-    public ImageContent(ImageUrl image_url) {
+    public ImageContentDtoDto(ImageUrl image_url) {
         super("image_url");
         this.image_url = image_url;
     }

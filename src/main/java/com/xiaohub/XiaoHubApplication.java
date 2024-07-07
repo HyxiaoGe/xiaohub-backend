@@ -4,9 +4,9 @@ import com.xiaohub.interactive.chat.ChatServer;
 
 public class XiaoHubApplication {
     public static void main(String[] args) {
-        ChatServer server = new ChatServer();
+        ChatServer chatServer = new ChatServer();
         try {
-            server.start();
+            chatServer.start();
         } catch (Exception e) {
             e.printStackTrace();
         }
