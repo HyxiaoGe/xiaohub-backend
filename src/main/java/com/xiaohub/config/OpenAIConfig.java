@@ -27,8 +27,12 @@ public class OpenAIConfig {
         }
     }
 
-    public String getModel() {
-        return properties.getProperty("model");
+    public String getChatModel() {
+        return properties.getProperty("chat-model");
+    }
+
+    public String getImageModel() {
+        return properties.getProperty("image-model");
     }
 
     public double getTemperature() {
@@ -54,5 +58,14 @@ public class OpenAIConfig {
     public String getSecretKey() {
         return properties.getProperty("secretKey");
     }
+
+    public String getAmount() {
+        return properties.getProperty("amount");
+    }
+
+    public String getSize() {
+        return properties.getProperty("size");
+    }
+
 
 }

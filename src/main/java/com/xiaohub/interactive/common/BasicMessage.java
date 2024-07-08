@@ -1,13 +1,16 @@
-package com.xiaohub.interactive.chat.dto.message;
+package com.xiaohub.interactive.common;
 
-public class BasicMessageDto {
+public class BasicMessage {
 
     private Integer sessionId;
 
+    private String type;
+
     private String content;
 
-    public BasicMessageDto(Integer sessionId, String content) {
+    public BasicMessage(Integer sessionId, String type, String content) {
         this.sessionId = sessionId;
+        this.type = type;
         this.content = content;
     }
 
@@ -17,6 +20,14 @@ public class BasicMessageDto {
 
     public void setSessionId(Integer sessionId) {
         this.sessionId = sessionId;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 
     public String getContent() {

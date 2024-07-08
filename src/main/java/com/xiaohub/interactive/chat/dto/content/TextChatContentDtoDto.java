@@ -1,13 +1,13 @@
 package com.xiaohub.interactive.chat.dto.content;
 
-public class TextContentDtoDto extends ContentDto {
+public class TextChatContentDtoDto extends ChatContentDto {
     private String text;
 
-    public TextContentDtoDto() {
+    public TextChatContentDtoDto() {
         super("text");
     }
 
-    public TextContentDtoDto(String text) {
+    public TextChatContentDtoDto(String text) {
         super("text");
         this.text = text;
     }

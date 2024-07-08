@@ -4,10 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.xiaohub.config.OpenAIConfig;
 import com.xiaohub.interactive.chat.dto.message.TextMessageDto;
 import com.xiaohub.interactive.chat.dto.message.TextPayloadDto;
-import com.xiaohub.interactive.chat.dto.message.BasicMessageDto;
-import com.xiaohub.interactive.chat.dto.content.ContentDto;
+import com.xiaohub.interactive.common.BasicMessage;
+import com.xiaohub.interactive.chat.dto.content.ChatContentDto;
 import com.xiaohub.interactive.chat.dto.content.ImageUrl;
-import com.xiaohub.interactive.chat.dto.content.ImageContentDtoDto;
+import com.xiaohub.interactive.chat.dto.content.ImageChatContentDtoDto;
 import com.xiaohub.util.AESUtil;
 import com.xiaohub.util.HttpUtil;
 import com.xiaohub.util.JsonUtil;
@@ -49,22 +49,22 @@ public class ChatWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
             String action = contentJson.get("action").asText();
             String content = "";
             Integer sessionId = -1;
-            BasicMessageDto basicMessageDto = new BasicMessageDto(sessionId, content);
+            BasicMessage basicMessage = new BasicMessage(sessionId, "text", content);
             if ("verify".equals(action)) {
                 String secretKey = contentJson.get("secretKey").asText();
                 boolean isVerified = validateKey(secretKey);
                 if (isVerified) {
-                    basicMessageDto.setContent("success");
-                    String rspContent = JsonUtil.toJson(basicMessageDto);
+                    basicMessage.setContent("success");
+                    String rspContent = JsonUtil.toJson(basicMessage);
                     channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(rspContent));
                 } else {
-                    basicMessageDto.setContent("failure");
-                    String rspContent = JsonUtil.toJson(basicMessageDto);
+                    basicMessage.setContent("failure");
+                    String rspContent = JsonUtil.toJson(basicMessage);
                     channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(rspContent));
                 }
             } else if ("session".equals(action)) {
                 TextPayloadDto textPayloadDto = new TextPayloadDto();
-                textPayloadDto.setModel(config.getModel());
+                textPayloadDto.setModel(config.getChatModel());
                 textPayloadDto.setTemperature(config.getTemperature());
                 textPayloadDto.setMaxTokens(config.getMaxTokens());
                 textPayloadDto.setStream(true);
@@ -91,13 +91,13 @@ public class ChatWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
                             //  为了前端渲染地更加自然，加了50ms的延迟
                             Thread.sleep(50);
                             // 立即将数据发送给WebSocket客户端
-                            basicMessageDto = new BasicMessageDto(sessionId, content);
-                            String rspContent = JsonUtil.toJson(basicMessageDto);
+                            basicMessage = new BasicMessage(sessionId, "text", content);
+                            String rspContent = JsonUtil.toJson(basicMessage);
                             channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(rspContent));
                         } else if (line.contains("[DONE]")) {
                             String done = line.substring(line.indexOf(":") + 1).trim();
-                            basicMessageDto = new BasicMessageDto(sessionId, done);
-                            String rspContent = JsonUtil.toJson(basicMessageDto);
+                            basicMessage = new BasicMessage(sessionId, "text", done);
+                            String rspContent = JsonUtil.toJson(basicMessage);
                             channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(rspContent));
                         }
                     }
@@ -132,14 +132,14 @@ public class ChatWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
                 break;
             }
         }
-        ImageContentDtoDto imageContentDto = new ImageContentDtoDto();
+        ImageChatContentDtoDto imageContentDto = new ImageChatContentDtoDto();
         ImageUrl image_url = new ImageUrl();
         image_url.setUrl(imgBase64Url);
         imageContentDto.setImage_url(image_url);
 
-        List<ContentDto> contentDtoList = textMessageDto.getContent();
-        contentDtoList.add(imageContentDto);
-        textMessageDto.setContent(contentDtoList);
+        List<ChatContentDto> chatContentDtoList = textMessageDto.getContent();
+        chatContentDtoList.add(imageContentDto);
+        textMessageDto.setContent(chatContentDtoList);
         return textMessageDtos;
     }
 

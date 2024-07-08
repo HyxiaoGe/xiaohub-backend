@@ -3,7 +3,7 @@ package com.xiaohub.interactive.chat.dto.message;
 import java.util.List;
 
 /**
- * 消息体
+ * 文本消息体
  */
 public class TextPayloadDto {
     private String model;
