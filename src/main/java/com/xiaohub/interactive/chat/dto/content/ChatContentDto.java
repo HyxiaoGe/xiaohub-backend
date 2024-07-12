@@ -10,8 +10,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         property = "type"
 )
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = TextChatContentDtoDto.class, name = "text"),
-        @JsonSubTypes.Type(value = ImageChatContentDtoDto.class, name = "image_url")
+        @JsonSubTypes.Type(value = TextChatContentDto.class, name = "text"),
+        @JsonSubTypes.Type(value = ImageChatContentDto.class, name = "image_url")
 })
 public abstract class ChatContentDto {
     @JsonProperty("type")
@@ -30,4 +30,5 @@ public abstract class ChatContentDto {
     public void setType(String type) {
         this.type = type;
     }
+
 }

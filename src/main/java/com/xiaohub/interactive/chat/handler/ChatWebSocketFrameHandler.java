@@ -2,17 +2,21 @@ package com.xiaohub.interactive.chat.handler;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.xiaohub.config.OpenAIConfig;
+import com.xiaohub.exception.SensitiveWordException;
+import com.xiaohub.interactive.chat.dto.content.ChatContentDto;
+import com.xiaohub.interactive.chat.dto.content.ImageChatContentDto;
+import com.xiaohub.interactive.chat.dto.content.ImageUrl;
+import com.xiaohub.interactive.chat.dto.content.TextChatContentDto;
 import com.xiaohub.interactive.chat.dto.message.TextMessageDto;
 import com.xiaohub.interactive.chat.dto.message.TextPayloadDto;
 import com.xiaohub.interactive.common.BasicMessage;
-import com.xiaohub.interactive.chat.dto.content.ChatContentDto;
-import com.xiaohub.interactive.chat.dto.content.ImageUrl;
-import com.xiaohub.interactive.chat.dto.content.ImageChatContentDtoDto;
 import com.xiaohub.util.AESUtil;
 import com.xiaohub.util.HttpUtil;
 import com.xiaohub.util.JsonUtil;
+import com.xiaohub.util.SensitiveWordUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import org.apache.http.HttpResponse;
@@ -33,6 +37,9 @@ public class ChatWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
 
     private OpenAIConfig config = new OpenAIConfig();
 
+    private static final int ERROE_CODE = 99999;
+
+
     /**
      * 处理从客户端接收的每一个WebSocket帧
      *
@@ -47,66 +54,81 @@ public class ChatWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
             TextWebSocketFrame textWebSocketFrame = (TextWebSocketFrame) webSocketFrame;
             JsonNode contentJson = JsonUtil.readObject(textWebSocketFrame.text());
             String action = contentJson.get("action").asText();
-            String content = "";
-            Integer sessionId = -1;
-            BasicMessage basicMessage = new BasicMessage(sessionId, "text", content);
-            if ("verify".equals(action)) {
-                String secretKey = contentJson.get("secretKey").asText();
-                boolean isVerified = validateKey(secretKey);
-                if (isVerified) {
-                    basicMessage.setContent("success");
-                    String rspContent = JsonUtil.toJson(basicMessage);
-                    channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(rspContent));
-                } else {
-                    basicMessage.setContent("failure");
-                    String rspContent = JsonUtil.toJson(basicMessage);
-                    channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(rspContent));
-                }
-            } else if ("session".equals(action)) {
-                TextPayloadDto textPayloadDto = new TextPayloadDto();
-                textPayloadDto.setModel(config.getChatModel());
-                textPayloadDto.setTemperature(config.getTemperature());
-                textPayloadDto.setMaxTokens(config.getMaxTokens());
-                textPayloadDto.setStream(true);
-                String apiKeys = config.getApiKeys();
-                String proxyUrl = config.getProxyUrl() + "/v1/chat/completions";
-                List<TextMessageDto> textMessageDtos;
-                try {
-                    textMessageDtos = parseContent(contentJson);
-                } catch (Exception e) {
-                    channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame("系统当前繁忙，请稍后重试！！！"));
-                    throw new RuntimeException(e);
-                }
-                textPayloadDto.setMessages(textMessageDtos);
-                HttpResponse httpResponse = HttpUtil.requestOpenAI(JsonUtil.toJson(textPayloadDto), proxyUrl, apiKeys);
-                try (InputStream inputStream = httpResponse.getEntity().getContent()) {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        if (line.startsWith("data: ") && !line.contains("[DONE]")) {
-                            // 移除前缀，获取纯粹的JSON字符串
-                            String json = line.substring("data: ".length());
-                            sessionId = contentJson.get("sessionId").asInt();
-                            content = JsonUtil.getStreamContent(json);
-                            //  为了前端渲染地更加自然，加了50ms的延迟
-                            Thread.sleep(50);
-                            // 立即将数据发送给WebSocket客户端
-                            basicMessage = new BasicMessage(sessionId, "text", content);
-                            String rspContent = JsonUtil.toJson(basicMessage);
-                            channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(rspContent));
-                        } else if (line.contains("[DONE]")) {
-                            String done = line.substring(line.indexOf(":") + 1).trim();
-                            basicMessage = new BasicMessage(sessionId, "text", done);
-                            String rspContent = JsonUtil.toJson(basicMessage);
-                            channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(rspContent));
-                        }
-                    }
-                } catch (Exception e) {
-                    // 异常处理
-                    throw new RuntimeException("Error while reading the stream", e);
-                }
+            switch (action) {
+                case "verify":
+                    handleVerifyAction(channelHandlerContext, contentJson);
+                    break;
+                case "session":
+                    handleSessionAction(channelHandlerContext, contentJson);
+                    break;
+                default:
+                    log.warn("Unsupported action: {}", action);
             }
         }
+    }
+
+    private void handleVerifyAction(ChannelHandlerContext context, JsonNode contentJson) {
+        String secretKey = contentJson.get("secretKey").asText();
+        boolean isVerified = validateKey(secretKey);
+        sendWebsocketResponse(context, -1, isVerified ? "success" : "failure");
+    }
+
+    private void handleSessionAction(ChannelHandlerContext context, JsonNode contentJson) {
+        TextPayloadDto textPayloadDto = new TextPayloadDto();
+        textPayloadDto.setModel(config.getChatModel());
+        textPayloadDto.setTemperature(config.getTemperature());
+        textPayloadDto.setMaxTokens(config.getMaxTokens());
+        textPayloadDto.setStream(true);
+        String apiKeys = config.getApiKeys();
+        String proxyUrl = config.getProxyUrl() + "/v1/chat/completions";
+        List<TextMessageDto> textMessageDtos;
+        try {
+            textMessageDtos = parseContent(contentJson);
+        } catch (SensitiveWordException e) {
+            sendWebsocketResponse(context, ERROE_CODE, e.getMessage());
+            return;
+        } catch (Exception e) {
+            sendWebsocketResponse(context, ERROE_CODE, "系统当前繁忙，请稍后重试！！！");
+            throw new RuntimeException(e);
+        }
+        textPayloadDto.setMessages(textMessageDtos);
+        HttpResponse httpResponse = HttpUtil.requestOpenAI(JsonUtil.toJson(textPayloadDto), proxyUrl, apiKeys);
+        int statusCode = httpResponse.getStatusLine().getStatusCode();
+        if (statusCode == HttpResponseStatus.OK.code()) {
+            try (InputStream inputStream = httpResponse.getEntity().getContent()) {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+                int sessionId = -1;
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (line.startsWith("data: ") && !line.contains("[DONE]")) {
+                        // 移除前缀，获取纯粹的JSON字符串
+                        String json = line.substring("data: ".length());
+                        sessionId = contentJson.get("sessionId").asInt();
+                        String content = JsonUtil.getStreamContent(json);
+                        //  为了前端渲染地更加自然，加了50ms的延迟
+                        Thread.sleep(50);
+                        log.info("content:{}", content);
+                        sendWebsocketResponse(context, sessionId, content);
+                    } else if (line.contains("[DONE]")) {
+                        String done = line.substring(line.indexOf(":") + 1).trim();
+                        sendWebsocketResponse(context, sessionId, done);
+                    }
+                }
+            } catch (Exception e) {
+                // 异常处理
+                throw new RuntimeException("Error while reading the stream", e);
+            }
+        } else if (statusCode == HttpResponseStatus.FORBIDDEN.code()) {
+            sendWebsocketResponse(context, ERROE_CODE, "当前服务暂时不可用，请稍后再试！！！");
+        } else {
+            log.error("Error: HTTP Status Code: {}", statusCode);
+        }
+    }
+
+    private void sendWebsocketResponse(ChannelHandlerContext context, int sessionId, String content) {
+        BasicMessage basicMessage = new BasicMessage(sessionId, "text", content);
+        String rspContent = JsonUtil.toJson(basicMessage);
+        context.channel().writeAndFlush(new TextWebSocketFrame(rspContent));
     }
 
     private List<TextMessageDto> parseContent(JsonNode contentJson) {
@@ -116,6 +138,11 @@ public class ChatWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
         } else {
             // 文本消息
             String conversation = contentJson.get("conversation").toString();
+            List<TextMessageDto> messages = JsonUtil.toObjectList(conversation, TextMessageDto.class);
+            String lastUserMessage = messages.stream().filter(message -> "user".equals(message.getRole())).map(TextMessageDto::getContent).flatMap(List::stream).filter(content -> content instanceof TextChatContentDto).map(content -> (TextChatContentDto) content).reduce((first, second) -> second).map(TextChatContentDto::getText).get();
+            if (SensitiveWordUtil.isSensitiveWord(lastUserMessage)) {
+                throw new SensitiveWordException("您的输入包含敏感词，请重新输入！！！");
+            }
             return JsonUtil.toObjectList(conversation, TextMessageDto.class);
         }
     }
@@ -132,12 +159,16 @@ public class ChatWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
                 break;
             }
         }
-        ImageChatContentDtoDto imageContentDto = new ImageChatContentDtoDto();
+        ImageChatContentDto imageContentDto = new ImageChatContentDto();
         ImageUrl image_url = new ImageUrl();
         image_url.setUrl(imgBase64Url);
         imageContentDto.setImage_url(image_url);
 
         List<ChatContentDto> chatContentDtoList = textMessageDto.getContent();
+        String lastUserMessage = ((TextChatContentDto) chatContentDtoList.get(0)).getText();
+        if (SensitiveWordUtil.isSensitiveWord(lastUserMessage)) {
+            throw new SensitiveWordException("您的输入包含敏感词，请重新输入！！！");
+        }
         chatContentDtoList.add(imageContentDto);
         textMessageDto.setContent(chatContentDtoList);
         return textMessageDtos;
@@ -148,13 +179,16 @@ public class ChatWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
      *
      * @param secretKey
      * @return
-     * @throws Exception
      */
-    private boolean validateKey(String secretKey) throws Exception {
-        String key = config.getAESKey();
-        String originSecretKey = config.getSecretKey();
-
-        return originSecretKey.equals(AESUtil.encrypt(key, secretKey));
+    private boolean validateKey(String secretKey) {
+        try {
+            String key = config.getAESKey();
+            String originSecretKey = config.getSecretKey();
+            return originSecretKey.equals(AESUtil.encrypt(key, secretKey));
+        } catch (Exception e) {
+            log.error("Key validation failed", e);
+            return false;
+        }
     }
 
 }
