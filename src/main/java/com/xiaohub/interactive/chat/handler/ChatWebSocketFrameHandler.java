@@ -20,12 +20,15 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import org.apache.http.HttpResponse;
+import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
@@ -52,6 +55,11 @@ public class ChatWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
         // 判断接收的是否为文本帧
         if (webSocketFrame instanceof TextWebSocketFrame) {
             TextWebSocketFrame textWebSocketFrame = (TextWebSocketFrame) webSocketFrame;
+            if ("ping".equals(textWebSocketFrame.text())) {
+                log.info("ChatServer: Received ping from the client");
+                sendWebsocketResponse(channelHandlerContext, -1, "pong");
+                return;
+            }
             JsonNode contentJson = JsonUtil.readObject(textWebSocketFrame.text());
             String action = contentJson.get("action").asText();
             switch (action) {
@@ -92,6 +100,8 @@ public class ChatWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
             throw new RuntimeException(e);
         }
         textPayloadDto.setMessages(textMessageDtos);
+//        Thread.sleep(5000);
+//        sendWebsocketResponse(context, 1, "当前服务暂时不可用，请稍后再试！！！");
         HttpResponse httpResponse = HttpUtil.requestOpenAI(JsonUtil.toJson(textPayloadDto), proxyUrl, apiKeys);
         int statusCode = httpResponse.getStatusLine().getStatusCode();
         if (statusCode == HttpResponseStatus.OK.code()) {
@@ -101,11 +111,11 @@ public class ChatWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
                 String line;
                 while ((line = reader.readLine()) != null) {
                     if (line.startsWith("data: ") && !line.contains("[DONE]")) {
-                        // 移除前缀，获取纯粹的JSON字符串
+                         // 移除前缀，获取纯粹的JSON字符串
                         String json = line.substring("data: ".length());
                         sessionId = contentJson.get("sessionId").asInt();
                         String content = JsonUtil.getStreamContent(json);
-                        //  为了前端渲染地更加自然，加了50ms的延迟
+                        // 为了前端渲染地更加自然，加了50ms的延迟
                         Thread.sleep(50);
                         log.info("content:{}", content);
                         sendWebsocketResponse(context, sessionId, content);
@@ -115,11 +125,18 @@ public class ChatWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
                     }
                 }
             } catch (Exception e) {
-                // 异常处理
+                 // 异常处理
                 throw new RuntimeException("Error while reading the stream", e);
             }
         } else if (statusCode == HttpResponseStatus.FORBIDDEN.code()) {
-            sendWebsocketResponse(context, ERROE_CODE, "当前服务暂时不可用，请稍后再试！！！");
+            try {
+                String jsonContent  = EntityUtils.toString(httpResponse.getEntity(), StandardCharsets.UTF_8);
+                String errMsg = JsonUtil.readObject(jsonContent).get("error").get("message").asText();
+                log.error("请求失败，原因为：{}", errMsg);
+                sendWebsocketResponse(context, ERROE_CODE, "当前服务暂时不可用，请稍后再试！！！");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         } else {
             log.error("Error: HTTP Status Code: {}", statusCode);
         }
@@ -139,7 +156,15 @@ public class ChatWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
             // 文本消息
             String conversation = contentJson.get("conversation").toString();
             List<TextMessageDto> messages = JsonUtil.toObjectList(conversation, TextMessageDto.class);
-            String lastUserMessage = messages.stream().filter(message -> "user".equals(message.getRole())).map(TextMessageDto::getContent).flatMap(List::stream).filter(content -> content instanceof TextChatContentDto).map(content -> (TextChatContentDto) content).reduce((first, second) -> second).map(TextChatContentDto::getText).get();
+            String lastUserMessage = messages.stream()
+                    .filter(message -> "user".equals(message.getRole()))
+                    .map(TextMessageDto::getContent)
+                    .flatMap(List::stream)
+                    .filter(content -> content instanceof TextChatContentDto)
+                    .map(content -> (TextChatContentDto) content)
+                    .reduce((first, second) -> second)
+                    .map(TextChatContentDto::getText)
+                    .get();
             if (SensitiveWordUtil.isSensitiveWord(lastUserMessage)) {
                 throw new SensitiveWordException("您的输入包含敏感词，请重新输入！！！");
             }
@@ -189,6 +214,10 @@ public class ChatWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
             log.error("Key validation failed", e);
             return false;
         }
+    }
+
+    private void handlePingRequest() {
+
     }
 
 }
