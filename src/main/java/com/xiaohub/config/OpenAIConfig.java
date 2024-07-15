@@ -8,7 +8,7 @@ import java.util.Properties;
 
 public class OpenAIConfig {
 
-    public static final String PROP_FILE = "chatgpt.properties";
+    public static final String PROP_FILE = "openai.properties";
     private Properties properties;
 
     public static final Logger log = LoggerFactory.getLogger(OpenAIConfig.class);

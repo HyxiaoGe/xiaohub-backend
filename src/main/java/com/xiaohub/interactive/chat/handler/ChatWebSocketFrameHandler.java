@@ -1,6 +1,7 @@
 package com.xiaohub.interactive.chat.handler;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.xiaohub.config.AWSConfig;
 import com.xiaohub.config.OpenAIConfig;
 import com.xiaohub.exception.SensitiveWordException;
 import com.xiaohub.interactive.chat.dto.content.ChatContentDto;
@@ -38,7 +39,9 @@ public class ChatWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
 
     public static final Logger log = LoggerFactory.getLogger(ChatWebSocketFrameHandler.class);
 
-    private OpenAIConfig config = new OpenAIConfig();
+    private OpenAIConfig openAIConfig = new OpenAIConfig();
+
+    private AWSConfig awsConfig = new AWSConfig();
 
     private static final int ERROE_CODE = 99999;
 
@@ -81,14 +84,14 @@ public class ChatWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
         sendWebsocketResponse(context, -1, isVerified ? "success" : "failure");
     }
 
-    private void handleSessionAction(ChannelHandlerContext context, JsonNode contentJson) {
+    private void handleSessionAction(ChannelHandlerContext context, JsonNode contentJson) throws IOException {
         TextPayloadDto textPayloadDto = new TextPayloadDto();
-        textPayloadDto.setModel(config.getChatModel());
-        textPayloadDto.setTemperature(config.getTemperature());
-        textPayloadDto.setMaxTokens(config.getMaxTokens());
+        textPayloadDto.setModel(openAIConfig.getChatModel());
+        textPayloadDto.setTemperature(openAIConfig.getTemperature());
+        textPayloadDto.setMaxTokens(openAIConfig.getMaxTokens());
         textPayloadDto.setStream(true);
-        String apiKeys = config.getApiKeys();
-        String proxyUrl = config.getProxyUrl() + "/v1/chat/completions";
+        String apiKeys = openAIConfig.getApiKeys();
+        String proxyUrl = openAIConfig.getProxyUrl() + "/v1/chat/completions";
         List<TextMessageDto> textMessageDtos;
         try {
             textMessageDtos = parseContent(contentJson);
@@ -100,9 +103,7 @@ public class ChatWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
             throw new RuntimeException(e);
         }
         textPayloadDto.setMessages(textMessageDtos);
-//        Thread.sleep(5000);
-//        sendWebsocketResponse(context, 1, "当前服务暂时不可用，请稍后再试！！！");
-        HttpResponse httpResponse = HttpUtil.requestOpenAI(JsonUtil.toJson(textPayloadDto), proxyUrl, apiKeys);
+        HttpResponse httpResponse = HttpUtil.proxyRequestOpenAI(awsConfig.getProxyUrl(), JsonUtil.toJson(textPayloadDto), proxyUrl, apiKeys);
         int statusCode = httpResponse.getStatusLine().getStatusCode();
         if (statusCode == HttpResponseStatus.OK.code()) {
             try (InputStream inputStream = httpResponse.getEntity().getContent()) {
@@ -138,7 +139,9 @@ public class ChatWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
                 throw new RuntimeException(e);
             }
         } else {
+            String errMsg  = EntityUtils.toString(httpResponse.getEntity(), StandardCharsets.UTF_8);
             log.error("Error: HTTP Status Code: {}", statusCode);
+            log.error("请求失败，原因为：{}", errMsg);
         }
     }
 
@@ -207,8 +210,8 @@ public class ChatWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
      */
     private boolean validateKey(String secretKey) {
         try {
-            String key = config.getAESKey();
-            String originSecretKey = config.getSecretKey();
+            String key = openAIConfig.getAESKey();
+            String originSecretKey = openAIConfig.getSecretKey();
             return originSecretKey.equals(AESUtil.encrypt(key, secretKey));
         } catch (Exception e) {
             log.error("Key validation failed", e);

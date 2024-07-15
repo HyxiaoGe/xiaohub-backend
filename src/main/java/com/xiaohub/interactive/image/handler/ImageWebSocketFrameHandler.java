@@ -1,6 +1,7 @@
 package com.xiaohub.interactive.image.handler;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.xiaohub.config.AWSConfig;
 import com.xiaohub.config.OpenAIConfig;
 import com.xiaohub.interactive.common.BasicMessage;
 import com.xiaohub.interactive.image.dto.content.ImageContentDto;
@@ -26,7 +27,9 @@ public class ImageWebSocketFrameHandler extends SimpleChannelInboundHandler<WebS
 
     public static final Logger log = LoggerFactory.getLogger(ImageWebSocketFrameHandler.class);
 
-    private OpenAIConfig config = new OpenAIConfig();
+    private OpenAIConfig openAIConfig = new OpenAIConfig();
+
+    private AWSConfig awsConfig = new AWSConfig();
 
     /**
      * 处理从客户端接收的每一个WebSocket帧
@@ -58,30 +61,15 @@ public class ImageWebSocketFrameHandler extends SimpleChannelInboundHandler<WebS
                 }
             } else if ("session".equals(action)) {
                 ImagePayloadDto imagePayloadDto = new ImagePayloadDto();
-                imagePayloadDto.setModel(config.getImageModel());
-                imagePayloadDto.setN(Integer.parseInt(config.getAmount()));
-                imagePayloadDto.setSize(config.getSize());
+                imagePayloadDto.setModel(openAIConfig.getImageModel());
+                imagePayloadDto.setN(Integer.parseInt(openAIConfig.getAmount()));
+                imagePayloadDto.setSize(openAIConfig.getSize());
                 imagePayloadDto.setPrompt(content);
-                String apiKeys = config.getApiKeys();
-                String proxyUrl = config.getProxyUrl() + "/v1/images/generations";
-                // 测试内容
-//                String contentText;
-//                String revisedPrompt = "The Avengers";
-//                String imgUrl = "https://xiaohub.oss-cn-shenzhen.aliyuncs.com/user-dirs/Weixin%20Image_20231111213534.jpg?Expires=1720897258&OSSAccessKeyId=TMP.3KihdMY9HJMMpTjtY3idsPDxVCrJf5REYKTV61Az8asoaHuHS5E6F1mcwADBFLYcMRRvkrCyCCKEuwJRM9ezHzju9m94DP&Signature=xiUnW92d6EqfiPAWQiHHoXLuvpw%3D";
-//                contentText = JsonUtil.objectMapper.writeValueAsString(new BasicMessage(0, "image", imgUrl));
-//                channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(contentText));
-//                for (int i = 0; i < revisedPrompt.length(); i++) {
-//                    String chunk = revisedPrompt.substring(i, Math.min(i + 1, revisedPrompt.length()));
-//                    contentText = JsonUtil.objectMapper.writeValueAsString(new BasicMessage(0, "text", chunk));
-//                    channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(contentText));
-//                    Thread.sleep(50);
-//                }
-//                contentText = JsonUtil.objectMapper.writeValueAsString(new BasicMessage(0, "text", "[DONE]"));
-//                channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(contentText));
-
-
-                HttpResponse httpResponse = HttpUtil.requestOpenAI(JsonUtil.toJson(imagePayloadDto), proxyUrl, apiKeys);
+                String apiKeys = openAIConfig.getApiKeys();
+                String proxyUrl = openAIConfig.getProxyUrl() + "/v1/images/generations";
+                HttpResponse httpResponse = HttpUtil.proxyRequestOpenAI(awsConfig.getProxyUrl(), JsonUtil.toJson(imagePayloadDto), proxyUrl, apiKeys);
                 int statusCode = httpResponse.getStatusLine().getStatusCode();
+                String contentText;
                 if (statusCode == 200) {
                     String jsonContent = EntityUtils.toString(httpResponse.getEntity(), StandardCharsets.UTF_8);
                     ImageContentDto imageContentDto = JsonUtil.objectMapper.readValue(jsonContent, ImageContentDto.class);
@@ -89,7 +77,6 @@ public class ImageWebSocketFrameHandler extends SimpleChannelInboundHandler<WebS
                         ImageContentDto.DataItem dataItem = imageContentDto.getData().get(0);
                         String revisedPrompt = dataItem.getRevisedPrompt();
                         String imgUrl = dataItem.getUrl();
-                        String contentText;
                         contentText = JsonUtil.objectMapper.writeValueAsString(new BasicMessage(0, "image", imgUrl));
                         channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(contentText));
                         for (int i = 0; i < revisedPrompt.length(); i++) {
@@ -101,12 +88,16 @@ public class ImageWebSocketFrameHandler extends SimpleChannelInboundHandler<WebS
                         contentText = JsonUtil.objectMapper.writeValueAsString(new BasicMessage(0, "text", "[DONE]"));
                         channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(contentText));
                     }
-                } else if (statusCode == 429) {
-                    log.error("当前图片生成过快，请稍后重试！！！");
                 } else {
-                    String errorMessage = EntityUtils.toString(httpResponse.getEntity(), "UTF-8");
-                    log.error("Error: HTTP Status Code: {}", statusCode);
-                    log.error("Error Details: {}", errorMessage);
+                    String responseEntity = EntityUtils.toString(httpResponse.getEntity(), "UTF-8");
+                    String errMsg = JsonUtil.readObject(responseEntity).get("error").asText();
+                    if (statusCode == 429 || ("Request failed with status code 429").equals(errMsg)) {
+                        contentText = JsonUtil.objectMapper.writeValueAsString(new BasicMessage(0, "errMsg", "当前图片生成过快，请稍后重试！！！"));
+                        channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(contentText));
+                    } else {
+                        log.error("Error: HTTP Status Code: {}", statusCode);
+                        log.error("Error Details: {}", errMsg);
+                    }
                 }
             }
         }
@@ -120,8 +111,8 @@ public class ImageWebSocketFrameHandler extends SimpleChannelInboundHandler<WebS
      * @throws Exception
      */
     private boolean validateKey(String secretKey) throws Exception {
-        String key = config.getAESKey();
-        String originSecretKey = config.getSecretKey();
+        String key = openAIConfig.getAESKey();
+        String originSecretKey = openAIConfig.getSecretKey();
 
         return originSecretKey.equals(AESUtil.encrypt(key, secretKey));
     }

@@ -1,5 +1,7 @@
 package com.xiaohub.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.util.JSONPObject;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.config.RequestConfig;
@@ -19,6 +21,8 @@ import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.security.cert.X509Certificate;
+import java.util.HashMap;
+import java.util.Map;
 
 public class HttpUtil {
 
@@ -34,21 +38,21 @@ public class HttpUtil {
             // 配置请求的超时设置
             RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(30000).setSocketTimeout(30000).setConnectionRequestTimeout(30000).build();
 
-            HttpHost proxy = new HttpHost("127.0.0.1", 7890);
-            DefaultProxyRoutePlanner routePlanner = new DefaultProxyRoutePlanner(proxy);
+//            HttpHost proxy = new HttpHost("127.0.0.1", 7890);
+//            DefaultProxyRoutePlanner routePlanner = new DefaultProxyRoutePlanner(proxy);
 
             return HttpClients.custom()
                     .setSSLContext(sslContext)
                     .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE)
                     .setDefaultRequestConfig(requestConfig)
-                    .setRoutePlanner(routePlanner)
+//                    .setRoutePlanner(routePlanner)
                     .build();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    public static HttpResponse requestOpenAI(String payload, String proxyUrl, String apiKeys) {
+    public static HttpResponse directRequestOpenAI(String payload, String proxyUrl, String apiKeys) {
 
         int attemptCount = 0;
         int maxAttempt = 3;
@@ -77,6 +81,28 @@ public class HttpUtil {
         }
 
         return null;
+    }
+
+    public static HttpResponse proxyRequestOpenAI(String awsProxyUrl, String payload, String proxyUrl, String apiKeys) throws JsonProcessingException {
+
+        HttpPost httpPost = new HttpPost(awsProxyUrl);
+
+        Map<String, String> requestData = new HashMap<>();
+        requestData.put("payload", payload);
+        requestData.put("proxyUrl", proxyUrl);
+        requestData.put("apiKeys", apiKeys);
+
+        String jsonString = JsonUtil.objectMapper.writeValueAsString(requestData);
+
+        httpPost.addHeader("Content-Type", "application/json");
+        StringEntity stringEntity = new StringEntity(jsonString, "UTF-8");
+        httpPost.setEntity(stringEntity);
+        try {
+            return httpClient.execute(httpPost);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
 }
