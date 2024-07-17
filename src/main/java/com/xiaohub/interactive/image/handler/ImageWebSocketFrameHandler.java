@@ -45,7 +45,7 @@ public class ImageWebSocketFrameHandler extends SimpleChannelInboundHandler<WebS
             TextWebSocketFrame textWebSocketFrame = (TextWebSocketFrame) webSocketFrame;
             if ("ping".equals(textWebSocketFrame.text())) {
                 log.info("ImageServer: Received ping from the client");
-                channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame("pong"));
+                channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(JsonUtil.objectMapper.writeValueAsString(new BasicMessage(0, "heartbeat", "pong"))));
                 return;
             }
             JsonNode contentJson = JsonUtil.readObject(textWebSocketFrame.text());
@@ -67,6 +67,7 @@ public class ImageWebSocketFrameHandler extends SimpleChannelInboundHandler<WebS
                 imagePayloadDto.setPrompt(content);
                 String apiKeys = openAIConfig.getApiKeys();
                 String proxyUrl = openAIConfig.getProxyUrl() + "/v1/images/generations";
+
                 HttpResponse httpResponse = HttpUtil.proxyRequestOpenAI(awsConfig.getProxyUrl(), JsonUtil.toJson(imagePayloadDto), proxyUrl, apiKeys);
                 int statusCode = httpResponse.getStatusLine().getStatusCode();
                 String contentText;
