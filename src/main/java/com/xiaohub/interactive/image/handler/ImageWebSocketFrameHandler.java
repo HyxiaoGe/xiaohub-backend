@@ -1,11 +1,13 @@
 package com.xiaohub.interactive.image.handler;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.xiaohub.config.AWSConfig;
 import com.xiaohub.config.OpenAIConfig;
 import com.xiaohub.interactive.common.BasicMessage;
 import com.xiaohub.interactive.image.dto.content.ImageContentDto;
 import com.xiaohub.interactive.image.dto.payload.ImagePayloadDto;
+import com.xiaohub.openapi.BaiDuTranslateApi;
 import com.xiaohub.util.AESUtil;
 import com.xiaohub.util.HttpUtil;
 import com.xiaohub.util.JsonUtil;
@@ -18,6 +20,7 @@ import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -68,20 +71,29 @@ public class ImageWebSocketFrameHandler extends SimpleChannelInboundHandler<WebS
                 String apiKeys = openAIConfig.getApiKeys();
                 String proxyUrl = openAIConfig.getProxyUrl() + "/v1/images/generations";
 
-                HttpResponse httpResponse = HttpUtil.proxyRequestOpenAI(awsConfig.getProxyUrl(), JsonUtil.toJson(imagePayloadDto), proxyUrl, apiKeys);
-                int statusCode = httpResponse.getStatusLine().getStatusCode();
+                HttpResponse httpResponse;
                 String contentText;
+                try {
+                    httpResponse = HttpUtil.proxyRequestOpenAI(awsConfig.getProxyUrl(), JsonUtil.toJson(imagePayloadDto), proxyUrl, apiKeys);
+                } catch (SocketTimeoutException e) {
+                    contentText = JsonUtil.objectMapper.writeValueAsString(new BasicMessage(0, "errMsg", "图片生成请求超时，请稍后重试！！！"));
+                    channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(contentText));
+                    return;
+                }
+                int statusCode = httpResponse.getStatusLine().getStatusCode();
                 if (statusCode == 200) {
                     String jsonContent = EntityUtils.toString(httpResponse.getEntity(), StandardCharsets.UTF_8);
                     ImageContentDto imageContentDto = JsonUtil.objectMapper.readValue(jsonContent, ImageContentDto.class);
                     if (!imageContentDto.getData().isEmpty()) {
                         ImageContentDto.DataItem dataItem = imageContentDto.getData().get(0);
                         String revisedPrompt = dataItem.getRevisedPrompt();
+                        log.info("revisedPrompt: {}", revisedPrompt);
+                        String resultText = BaiDuTranslateApi.translate(revisedPrompt);
                         String imgUrl = dataItem.getUrl();
                         contentText = JsonUtil.objectMapper.writeValueAsString(new BasicMessage(0, "image", imgUrl));
                         channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(contentText));
-                        for (int i = 0; i < revisedPrompt.length(); i++) {
-                            String chunk = revisedPrompt.substring(i, Math.min(i + 1, revisedPrompt.length()));
+                        for (int i = 0; i < resultText.length(); i++) {
+                            String chunk = resultText.substring(i, Math.min(i + 1, resultText.length()));
                             contentText = JsonUtil.objectMapper.writeValueAsString(new BasicMessage(0, "text", chunk));
                             channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(contentText));
                             Thread.sleep(50);
