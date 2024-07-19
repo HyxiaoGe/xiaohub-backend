@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.xiaohub.config.AWSConfig;
 import com.xiaohub.config.OpenAIConfig;
+import com.xiaohub.exception.ConnectionTimeoutException;
 import com.xiaohub.interactive.common.BasicMessage;
 import com.xiaohub.interactive.image.dto.content.ImageContentDto;
 import com.xiaohub.interactive.image.dto.payload.ImagePayloadDto;
@@ -75,8 +76,8 @@ public class ImageWebSocketFrameHandler extends SimpleChannelInboundHandler<WebS
                 String contentText;
                 try {
                     httpResponse = HttpUtil.proxyRequestOpenAI(awsConfig.getProxyUrl(), JsonUtil.toJson(imagePayloadDto), proxyUrl, apiKeys);
-                } catch (SocketTimeoutException e) {
-                    contentText = JsonUtil.objectMapper.writeValueAsString(new BasicMessage(0, "errMsg", "图片生成请求超时，请稍后重试！！！"));
+                } catch (ConnectionTimeoutException e) {
+                    contentText = JsonUtil.objectMapper.writeValueAsString(new BasicMessage(0, "errMsg", e.getMessage()));
                     channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(contentText));
                     return;
                 }

@@ -3,6 +3,7 @@ package com.xiaohub.interactive.chat.handler;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.xiaohub.config.AWSConfig;
 import com.xiaohub.config.OpenAIConfig;
+import com.xiaohub.exception.ConnectionTimeoutException;
 import com.xiaohub.exception.SensitiveWordException;
 import com.xiaohub.interactive.chat.dto.content.ChatContentDto;
 import com.xiaohub.interactive.chat.dto.content.ImageChatContentDto;
@@ -21,6 +22,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import org.apache.http.HttpResponse;
+import org.apache.http.conn.HttpHostConnectException;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +31,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
@@ -103,7 +106,13 @@ public class ChatWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
             throw new RuntimeException(e);
         }
         textPayloadDto.setMessages(textMessageDtos);
-        HttpResponse httpResponse = HttpUtil.proxyRequestOpenAI(awsConfig.getProxyUrl(), JsonUtil.toJson(textPayloadDto), proxyUrl, apiKeys);
+        HttpResponse httpResponse;
+        try {
+            httpResponse = HttpUtil.proxyRequestOpenAI(awsConfig.getProxyUrl(), JsonUtil.toJson(textPayloadDto), proxyUrl, apiKeys);
+        } catch (ConnectionTimeoutException e) {
+            sendWebsocketResponse(context, ERROE_CODE, e.getMessage());
+            return;
+        }
         int statusCode = httpResponse.getStatusLine().getStatusCode();
         if (statusCode == HttpResponseStatus.OK.code()) {
             try (InputStream inputStream = httpResponse.getEntity().getContent()) {

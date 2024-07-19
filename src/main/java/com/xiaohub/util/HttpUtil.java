@@ -2,12 +2,14 @@ package com.xiaohub.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xiaohub.constants.HttpResponseWrapper;
+import com.xiaohub.exception.ConnectionTimeoutException;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.HttpHostConnectException;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.entity.ContentType;
@@ -85,7 +87,7 @@ public class HttpUtil {
         return null;
     }
 
-    public static HttpResponse proxyRequestOpenAI(String awsProxyUrl, String payload, String proxyUrl, String apiKeys) throws SocketTimeoutException {
+    public static HttpResponse proxyRequestOpenAI(String awsProxyUrl, String payload, String proxyUrl, String apiKeys) throws ConnectionTimeoutException {
 
         HttpPost httpPost = new HttpPost(awsProxyUrl);
 
@@ -107,9 +109,9 @@ public class HttpUtil {
         httpPost.setEntity(stringEntity);
         try {
             return httpClient.execute(httpPost);
-        } catch (SocketTimeoutException e) {
+        } catch (SocketTimeoutException | HttpHostConnectException e) {
             log.error("Socket timeout occurred while executing HTTP request: {}", e.getMessage(), e);
-            throw new SocketTimeoutException();
+            throw new ConnectionTimeoutException("当前请求超时，请稍后再试！！！", e);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

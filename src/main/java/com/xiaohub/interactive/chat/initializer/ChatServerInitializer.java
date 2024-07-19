@@ -1,6 +1,7 @@
 package com.xiaohub.interactive.chat.initializer;
 
 import com.xiaohub.interactive.chat.handler.ChatWebSocketFrameHandler;
+import com.xiaohub.interactive.chat.handler.ExceptionHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
@@ -28,6 +29,7 @@ public class ChatServerInitializer extends ChannelInitializer<SocketChannel> {
         socketChannel.pipeline().addLast(new ChunkedWriteHandler());
         //  WebSocketServerProtocolHandler: 处理特定于WebSocket的事务，例如握手和帧的控制
         socketChannel.pipeline().addLast(new WebSocketServerProtocolHandler("/ws",  null, true, 262144));
+//        socketChannel.pipeline().addLast(new ExceptionHandler());
         //  WebSocketFrameHandler 自定义的处理器，用于处理WebSocket
         socketChannel.pipeline().addLast(new ChatWebSocketFrameHandler());
     }
