@@ -1,4 +1,4 @@
-package com.xiaohub.config;
+package com.xiaohub.properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -6,14 +6,14 @@ import org.slf4j.LoggerFactory;
 import java.io.InputStream;
 import java.util.Properties;
 
-public class AWSConfig {
+public class BaiDuProperties {
 
-    public static final String PROP_FILE = "aws.properties";
+    public static final String PROP_FILE = "baidu.properties";
     private Properties properties;
 
-    public static final Logger log = LoggerFactory.getLogger(AWSConfig.class);
+    public static final Logger log = LoggerFactory.getLogger(BaiDuProperties.class);
 
-    public AWSConfig() {
+    public BaiDuProperties() {
         properties = new Properties();
 
         try {
@@ -27,8 +27,12 @@ public class AWSConfig {
         }
     }
 
-    public String getProxyUrl() {
-        return properties.getProperty("proxyUrl");
+    public String getAppId() {
+        return properties.getProperty("appid");
+    }
+
+    public String getAppSecret() {
+        return properties.getProperty("appsecret");
     }
 
 }

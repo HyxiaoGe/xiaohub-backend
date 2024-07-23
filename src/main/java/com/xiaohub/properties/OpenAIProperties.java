@@ -1,4 +1,4 @@
-package com.xiaohub.config;
+package com.xiaohub.properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -6,14 +6,14 @@ import org.slf4j.LoggerFactory;
 import java.io.InputStream;
 import java.util.Properties;
 
-public class OpenAIConfig {
+public class OpenAIProperties {
 
     public static final String PROP_FILE = "openai.properties";
     private Properties properties;
 
-    public static final Logger log = LoggerFactory.getLogger(OpenAIConfig.class);
+    public static final Logger log = LoggerFactory.getLogger(OpenAIProperties.class);
 
-    public OpenAIConfig() {
+    public OpenAIProperties() {
         properties = new Properties();
 
         try {

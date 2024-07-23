@@ -8,6 +8,7 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.conn.HttpHostConnectException;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
@@ -151,6 +152,29 @@ public class HttpUtil {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+
+    public static HttpResponseWrapper sendGetRequest(String url, Map<String, String> params) {
+        // 构建URL
+        StringBuilder urlWithParams = new StringBuilder(url);
+        if (params != null && !params.isEmpty()) {
+            urlWithParams.append("?");
+            for (Map.Entry<String, String> entry : params.entrySet()) {
+                urlWithParams.append(entry.getKey()).append(entry.getValue()).append("&");
+            }
+            urlWithParams.setLength(urlWithParams.length() - 1);
+        }
+
+        HttpGet httpGet = new HttpGet(urlWithParams.toString());
+
+        try {
+            HttpResponse httpResponse = httpClient.execute(httpGet);
+            return new HttpResponseWrapper(httpResponse);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
 }

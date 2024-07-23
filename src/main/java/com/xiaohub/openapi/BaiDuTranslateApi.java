@@ -1,7 +1,7 @@
 package com.xiaohub.openapi;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.xiaohub.config.BaiDuConfig;
+import com.xiaohub.properties.BaiDuProperties;
 import com.xiaohub.constants.ContentType;
 import com.xiaohub.constants.HttpResponseWrapper;
 import com.xiaohub.util.HttpUtil;
@@ -18,12 +18,12 @@ public class BaiDuTranslateApi {
 
     private static final String BAIDU_TRANSLATE_API = "https://fanyi-api.baidu.com/api/trans/vip/translate";
 
-    private static final BaiDuConfig baiduConfig = new BaiDuConfig();
+    private static final BaiDuProperties BAIDU_PROPERTIES = new BaiDuProperties();
 
     public static String translate(String queryText) {
 
-        String appId = baiduConfig.getAppId();
-        String appSecret = baiduConfig.getAppSecret();
+        String appId = BAIDU_PROPERTIES.getAppId();
+        String appSecret = BAIDU_PROPERTIES.getAppSecret();
         String salt = RandomGenerator.generateRandomNumber();
         String appendStr = appId + queryText + salt + appSecret;
         String sign = MD5Util.getMD5(appendStr);

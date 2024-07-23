@@ -1,9 +1,8 @@
 package com.xiaohub.interactive.image.handler;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.xiaohub.config.AWSConfig;
-import com.xiaohub.config.OpenAIConfig;
+import com.xiaohub.properties.AWSProperties;
+import com.xiaohub.properties.OpenAIProperties;
 import com.xiaohub.exception.ConnectionTimeoutException;
 import com.xiaohub.interactive.common.BasicMessage;
 import com.xiaohub.interactive.image.dto.content.ImageContentDto;
@@ -21,7 +20,6 @@ import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -31,9 +29,9 @@ public class ImageWebSocketFrameHandler extends SimpleChannelInboundHandler<WebS
 
     public static final Logger log = LoggerFactory.getLogger(ImageWebSocketFrameHandler.class);
 
-    private OpenAIConfig openAIConfig = new OpenAIConfig();
+    private OpenAIProperties openAIProperties = new OpenAIProperties();
 
-    private AWSConfig awsConfig = new AWSConfig();
+    private AWSProperties awsProperties = new AWSProperties();
 
     /**
      * 处理从客户端接收的每一个WebSocket帧
@@ -65,17 +63,17 @@ public class ImageWebSocketFrameHandler extends SimpleChannelInboundHandler<WebS
                 }
             } else if ("session".equals(action)) {
                 ImagePayloadDto imagePayloadDto = new ImagePayloadDto();
-                imagePayloadDto.setModel(openAIConfig.getImageModel());
-                imagePayloadDto.setN(Integer.parseInt(openAIConfig.getAmount()));
-                imagePayloadDto.setSize(openAIConfig.getSize());
+                imagePayloadDto.setModel(openAIProperties.getImageModel());
+                imagePayloadDto.setN(Integer.parseInt(openAIProperties.getAmount()));
+                imagePayloadDto.setSize(openAIProperties.getSize());
                 imagePayloadDto.setPrompt(content);
-                String apiKeys = openAIConfig.getApiKeys();
-                String proxyUrl = openAIConfig.getProxyUrl() + "/v1/images/generations";
+                String apiKeys = openAIProperties.getApiKeys();
+                String proxyUrl = openAIProperties.getProxyUrl() + "/v1/images/generations";
 
                 HttpResponse httpResponse;
                 String contentText;
                 try {
-                    httpResponse = HttpUtil.proxyRequestOpenAI(awsConfig.getProxyUrl(), JsonUtil.toJson(imagePayloadDto), proxyUrl, apiKeys);
+                    httpResponse = HttpUtil.proxyRequestOpenAI(awsProperties.getProxyUrl(), JsonUtil.toJson(imagePayloadDto), proxyUrl, apiKeys);
                 } catch (ConnectionTimeoutException e) {
                     contentText = JsonUtil.objectMapper.writeValueAsString(new BasicMessage(0, "errMsg", e.getMessage()));
                     channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(contentText));
@@ -125,8 +123,8 @@ public class ImageWebSocketFrameHandler extends SimpleChannelInboundHandler<WebS
      * @throws Exception
      */
     private boolean validateKey(String secretKey) throws Exception {
-        String key = openAIConfig.getAESKey();
-        String originSecretKey = openAIConfig.getSecretKey();
+        String key = openAIProperties.getAESKey();
+        String originSecretKey = openAIProperties.getSecretKey();
 
         return originSecretKey.equals(AESUtil.encrypt(key, secretKey));
     }

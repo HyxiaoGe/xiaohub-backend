@@ -1,8 +1,8 @@
 package com.xiaohub.interactive.chat.handler;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.xiaohub.config.AWSConfig;
-import com.xiaohub.config.OpenAIConfig;
+import com.xiaohub.properties.AWSProperties;
+import com.xiaohub.properties.OpenAIProperties;
 import com.xiaohub.exception.ConnectionTimeoutException;
 import com.xiaohub.exception.SensitiveWordException;
 import com.xiaohub.interactive.chat.dto.content.ChatContentDto;
@@ -22,7 +22,6 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import org.apache.http.HttpResponse;
-import org.apache.http.conn.HttpHostConnectException;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +30,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
@@ -42,9 +40,9 @@ public class ChatWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
 
     public static final Logger log = LoggerFactory.getLogger(ChatWebSocketFrameHandler.class);
 
-    private OpenAIConfig openAIConfig = new OpenAIConfig();
+    private OpenAIProperties openAIProperties = new OpenAIProperties();
 
-    private AWSConfig awsConfig = new AWSConfig();
+    private AWSProperties awsProperties = new AWSProperties();
 
     private static final int ERROE_CODE = 99999;
 
@@ -89,12 +87,12 @@ public class ChatWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
 
     private void handleSessionAction(ChannelHandlerContext context, JsonNode contentJson) throws IOException {
         TextPayloadDto textPayloadDto = new TextPayloadDto();
-        textPayloadDto.setModel(openAIConfig.getChatModel());
-        textPayloadDto.setTemperature(openAIConfig.getTemperature());
-        textPayloadDto.setMaxTokens(openAIConfig.getMaxTokens());
+        textPayloadDto.setModel(openAIProperties.getChatModel());
+        textPayloadDto.setTemperature(openAIProperties.getTemperature());
+        textPayloadDto.setMaxTokens(openAIProperties.getMaxTokens());
         textPayloadDto.setStream(true);
-        String apiKeys = openAIConfig.getApiKeys();
-        String proxyUrl = openAIConfig.getProxyUrl() + "/v1/chat/completions";
+        String apiKeys = openAIProperties.getApiKeys();
+        String proxyUrl = openAIProperties.getProxyUrl() + "/v1/chat/completions";
         List<TextMessageDto> textMessageDtos;
         try {
             textMessageDtos = parseContent(contentJson);
@@ -108,7 +106,7 @@ public class ChatWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
         textPayloadDto.setMessages(textMessageDtos);
         HttpResponse httpResponse;
         try {
-            httpResponse = HttpUtil.proxyRequestOpenAI(awsConfig.getProxyUrl(), JsonUtil.toJson(textPayloadDto), proxyUrl, apiKeys);
+            httpResponse = HttpUtil.proxyRequestOpenAI(awsProperties.getProxyUrl(), JsonUtil.toJson(textPayloadDto), proxyUrl, apiKeys);
         } catch (ConnectionTimeoutException e) {
             sendWebsocketResponse(context, ERROE_CODE, e.getMessage());
             return;
@@ -219,8 +217,8 @@ public class ChatWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
      */
     private boolean validateKey(String secretKey) {
         try {
-            String key = openAIConfig.getAESKey();
-            String originSecretKey = openAIConfig.getSecretKey();
+            String key = openAIProperties.getAESKey();
+            String originSecretKey = openAIProperties.getSecretKey();
             return originSecretKey.equals(AESUtil.encrypt(key, secretKey));
         } catch (Exception e) {
             log.error("Key validation failed", e);
