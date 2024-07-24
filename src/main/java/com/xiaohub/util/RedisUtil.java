@@ -163,10 +163,10 @@ public class RedisUtil {
         }
     }
 
-    public static <T> List<T> getList(String key, Class<T> clazz) {
+    public static <T> List<T> getList(String key, Class<T> clazz, int start, int stop) {
         List<T> list = new ArrayList<>();
         try (Jedis jedis = jedisPool.getResource()) {
-            List<String> items = jedis.lrange(key, 0, -1);
+            List<String> items = jedis.lrange(key, start, stop);
             for (String itemJson : items) {
                 T item = objectMapper.readValue(itemJson, clazz);
                 list.add(item);
