@@ -161,7 +161,7 @@ public class HttpUtil {
         if (params != null && !params.isEmpty()) {
             urlWithParams.append("?");
             for (Map.Entry<String, String> entry : params.entrySet()) {
-                urlWithParams.append(entry.getKey()).append(entry.getValue()).append("&");
+                urlWithParams.append(entry.getKey()).append("=").append(entry.getValue()).append("&");
             }
             urlWithParams.setLength(urlWithParams.length() - 1);
         }

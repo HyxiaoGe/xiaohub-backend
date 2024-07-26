@@ -22,9 +22,10 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<HttpObject> 
     protected void channelRead0(ChannelHandlerContext ctx, HttpObject msg) throws Exception {
         if (msg instanceof HttpRequest) {
             HttpRequest request = (HttpRequest) msg;
-            if ("/insight/list".equals(request.uri())) {
-                log.info("I'm in!!!");
-                List<Article> articles = DataAgent.retrieve();
+            String uri = request.uri();
+            if (uri.startsWith("/api/insight")) {
+                String platform = uri.substring(uri.lastIndexOf("/") + 1);
+                List<Article> articles = DataAgent.retrieve(platform);
 
                 String jsonString = JsonUtil.objectMapper.writeValueAsString(articles);
                 DefaultFullHttpResponse response = new DefaultFullHttpResponse(
@@ -39,4 +40,5 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<HttpObject> 
             }
         }
     }
+
 }

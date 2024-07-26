@@ -1,5 +1,6 @@
 package com.xiaohub;
 
+import com.xiaohub.datadigger.DataAgent;
 import com.xiaohub.interactive.chat.initializer.ChatServerInitializer;
 import com.xiaohub.interactive.image.initializer.ImageServerInitializer;
 import com.xiaohub.interactive.insight.initializer.InsightServerInitializer;
@@ -25,6 +26,8 @@ public class XiaoHubServer {
         startServer(new ChatServerInitializer(), 8808);
         startServer(new ImageServerInitializer(), 8809);
         startServer(new InsightServerInitializer(), 8810);
+
+        DataAgent.init();
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             masterGroup.shutdownGracefully();
