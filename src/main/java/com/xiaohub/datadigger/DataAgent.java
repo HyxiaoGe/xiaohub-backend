@@ -79,9 +79,9 @@ public class DataAgent {
     public static List<Article> retrieve(String platform) {
         int stop;
         if (platform.equals(Platform.KR_36.getPlatform())) {
-            stop = 10;
+            stop = 9;
         } else {
-            stop = 25;
+            stop = 19;
         }
         return RedisUtil.getList(REDIS_KEY + platform, Article.class, 0, stop);
     }
