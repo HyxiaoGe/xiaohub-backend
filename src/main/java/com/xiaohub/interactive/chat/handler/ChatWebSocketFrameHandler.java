@@ -60,7 +60,7 @@ public class ChatWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
         if (webSocketFrame instanceof TextWebSocketFrame) {
             TextWebSocketFrame textWebSocketFrame = (TextWebSocketFrame) webSocketFrame;
             if ("ping".equals(textWebSocketFrame.text())) {
-                log.info("ChatServer: Received ping from the client");
+//                log.info("ChatServer: Received ping from the client");
                 sendWebsocketResponse(channelHandlerContext, -1, "pong");
                 return;
             }
@@ -125,7 +125,7 @@ public class ChatWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
                         String content = JsonUtil.getStreamContent(json);
                         // 为了前端渲染地更加自然，加了50ms的延迟
                         Thread.sleep(50);
-                        log.info("content:{}", content);
+//                        log.info("content:{}", content);
                         sendWebsocketResponse(context, sessionId, content);
                     } else if (line.contains("[DONE]")) {
                         String done = line.substring(line.indexOf(":") + 1).trim();

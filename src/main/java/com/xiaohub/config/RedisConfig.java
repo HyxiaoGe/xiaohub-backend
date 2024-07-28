@@ -18,10 +18,11 @@ public class RedisConfig {
         poolConfig.setTestWhileIdle(RedisProperties.getBooleanProperty("redis.testWhileIdle"));
 
         String redisHost = RedisProperties.getProperty("redis.host");
+        String redisPassword = RedisProperties.getProperty("redis.password");
         int redisPort = RedisProperties.getIntProperty("redis.port");
         int timeout = RedisProperties.getIntProperty("redis.timeout");
 
-        jedisPool = new JedisPool(poolConfig, redisHost, redisPort, timeout);
+        jedisPool = new JedisPool(poolConfig, redisHost, redisPort, timeout, redisPassword);
     }
 
     public static JedisPool getJedisPool() {

@@ -7,9 +7,7 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Set;
-import java.util.List;
+import java.util.*;
 
 public class RedisUtil {
 
@@ -175,6 +173,41 @@ public class RedisUtil {
             e.printStackTrace();
         }
         return list;
+    }
+
+    /**
+     * 从Redis获取最新的数据项：从Redis中获取列表的第一条数据，这是最近一次添加的数据。
+     * 确定新数据：比较API返回的数据列表和从Redis获取的最新数据，找出新的数据项。
+     * 存储新数据：将确认为新的数据项使用LPUSH命令推送到Redis列表的前端。
+     * @param key
+     * @param currentItems
+     * @param clazz
+     * @param <T>
+     */
+    public static <T> void saveList(String key, List<T> currentItems, Class<T> clazz) {
+        try (Jedis jedis = jedisPool.getResource()) {
+            //  从redis获取截至目前最新的数据
+            String latestItemJson = jedis.lindex(key, 0);
+            T latestItem = null;
+            if (latestItemJson != null) {
+                latestItem = objectMapper.readValue(latestItemJson, clazz);
+            }
+
+            List<T> newItems = new ArrayList<>();
+            for (T item : currentItems) {
+                if (item.equals(latestItem)) {
+                    break;  //  当与之相匹配时，证明当前及之后的数据都是旧数据
+                }
+                newItems.add(item);
+            }
+            Collections.reverse(newItems);
+            for (T item : newItems) {
+                String itemJson = objectMapper.writeValueAsString(item);
+                jedis.lpush(key, itemJson);
+            }
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
     }
 
     public static long lpush(String key, String value) {

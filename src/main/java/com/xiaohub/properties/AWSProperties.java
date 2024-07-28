@@ -31,4 +31,7 @@ public class AWSProperties {
         return properties.getProperty("proxyUrl");
     }
 
+    public String getDatadiggerUrl() {
+        return properties.getProperty("datadiggerUrl");
+    }
 }

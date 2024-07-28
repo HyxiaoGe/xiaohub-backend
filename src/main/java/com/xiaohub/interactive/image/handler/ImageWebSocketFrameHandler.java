@@ -46,7 +46,7 @@ public class ImageWebSocketFrameHandler extends SimpleChannelInboundHandler<WebS
         if (webSocketFrame instanceof TextWebSocketFrame) {
             TextWebSocketFrame textWebSocketFrame = (TextWebSocketFrame) webSocketFrame;
             if ("ping".equals(textWebSocketFrame.text())) {
-                log.info("ImageServer: Received ping from the client");
+//                log.info("ImageServer: Received ping from the client");
                 channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(JsonUtil.objectMapper.writeValueAsString(new BasicMessage(0, "heartbeat", "pong"))));
                 return;
             }
@@ -86,7 +86,7 @@ public class ImageWebSocketFrameHandler extends SimpleChannelInboundHandler<WebS
                     if (!imageContentDto.getData().isEmpty()) {
                         ImageContentDto.DataItem dataItem = imageContentDto.getData().get(0);
                         String revisedPrompt = dataItem.getRevisedPrompt();
-                        log.info("revisedPrompt: {}", revisedPrompt);
+//                        log.info("revisedPrompt: {}", revisedPrompt);
                         String resultText = BaiDuTranslateApi.translate(revisedPrompt);
                         String imgUrl = dataItem.getUrl();
                         contentText = JsonUtil.objectMapper.writeValueAsString(new BasicMessage(0, "image", imgUrl));

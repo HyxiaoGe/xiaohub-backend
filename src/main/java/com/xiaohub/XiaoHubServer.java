@@ -52,8 +52,6 @@ public class XiaoHubServer {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
     }
-
 
 }
