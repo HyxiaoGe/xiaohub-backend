@@ -2,6 +2,8 @@ package com.xiaohub.datadigger.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 public class Article {
 
     private String content;
@@ -42,4 +44,17 @@ public class Article {
         this.title = title;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Article article = (Article) obj;
+
+        return Objects.equals(link, article.link) && Objects.equals(title, article.title);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(link, title);
+    }
 }

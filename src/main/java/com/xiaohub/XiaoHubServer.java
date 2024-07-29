@@ -18,7 +18,7 @@ public class XiaoHubServer {
 
     private static final Logger log = LoggerFactory.getLogger(XiaoHubServer.class);
 
-    private static final EventLoopGroup masterGroup = new NioEventLoopGroup(1);
+    private static final EventLoopGroup masterGroup = new NioEventLoopGroup(5);
     private static final EventLoopGroup workerGroup = new NioEventLoopGroup();
 
     public static void main(String[] args) {

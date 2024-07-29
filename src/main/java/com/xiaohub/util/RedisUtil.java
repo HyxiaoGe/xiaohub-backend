@@ -184,7 +184,8 @@ public class RedisUtil {
      * @param clazz
      * @param <T>
      */
-    public static <T> void saveList(String key, List<T> currentItems, Class<T> clazz) {
+    public static <T> boolean saveList(String key, List<T> currentItems, Class<T> clazz) {
+        boolean hasItem = false;
         try (Jedis jedis = jedisPool.getResource()) {
             //  从redis获取截至目前最新的数据
             String latestItemJson = jedis.lindex(key, 0);
@@ -200,6 +201,9 @@ public class RedisUtil {
                 }
                 newItems.add(item);
             }
+            if (!newItems.isEmpty()) {
+                hasItem = true;
+            }
             Collections.reverse(newItems);
             for (T item : newItems) {
                 String itemJson = objectMapper.writeValueAsString(item);
@@ -208,6 +212,7 @@ public class RedisUtil {
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
+        return hasItem;
     }
 
     public static long lpush(String key, String value) {

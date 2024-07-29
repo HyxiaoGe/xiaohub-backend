@@ -14,9 +14,9 @@ import org.slf4j.LoggerFactory;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-public class HttpRequestHandler extends SimpleChannelInboundHandler<HttpObject> {
+public class InsightHttpRequestHandler extends SimpleChannelInboundHandler<HttpObject> {
 
-    public static final Logger log = LoggerFactory.getLogger(HttpRequestHandler.class);
+    public static final Logger log = LoggerFactory.getLogger(InsightHttpRequestHandler.class);
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, HttpObject msg) throws Exception {

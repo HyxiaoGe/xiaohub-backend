@@ -13,8 +13,11 @@ import com.xiaohub.util.HttpUtil;
 import com.xiaohub.util.JsonUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
+import io.netty.util.concurrent.GlobalEventExecutor;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
@@ -32,6 +35,19 @@ public class ImageWebSocketFrameHandler extends SimpleChannelInboundHandler<WebS
     private OpenAIProperties openAIProperties = new OpenAIProperties();
 
     private AWSProperties awsProperties = new AWSProperties();
+
+    //  用于存储所有活动的WebSocket连接
+    private static final ChannelGroup channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
+
+    @Override
+    public void handlerAdded(ChannelHandlerContext ctx) {
+        channels.add(ctx.channel());
+    }
+
+    @Override
+    public void handlerRemoved(ChannelHandlerContext ctx) {
+        channels.add(ctx.channel());
+    }
 
     /**
      * 处理从客户端接收的每一个WebSocket帧

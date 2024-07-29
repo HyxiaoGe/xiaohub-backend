@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xiaohub.constants.HttpResponseWrapper;
 import com.xiaohub.constants.Platform;
 import com.xiaohub.datadigger.dto.Article;
+import com.xiaohub.interactive.insight.handler.InsightWebSocketFrameHandler;
 import com.xiaohub.properties.AWSProperties;
 import com.xiaohub.util.HttpUtil;
 import com.xiaohub.util.JsonUtil;
@@ -64,7 +65,10 @@ public class DataAgent {
                 try {
                     log.info("{} fetch data...", platform);
                     List<Article> articles = JsonUtil.objectMapper.treeToValue(httpResponse.getJson(), JsonUtil.objectMapper.getTypeFactory().constructCollectionType(List.class, Article.class));
-                    RedisUtil.saveList(REDIS_KEY + platform, articles, Article.class);
+                    boolean hasNewItem = RedisUtil.saveList(REDIS_KEY + platform, articles, Article.class);
+                    if (hasNewItem) {
+                        InsightWebSocketFrameHandler.broadcastUpdate(platform);
+                    }
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException(e);
                 }
