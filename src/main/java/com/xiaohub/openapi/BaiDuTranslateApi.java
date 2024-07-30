@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.xiaohub.properties.BaiDuProperties;
 import com.xiaohub.constants.ContentType;
 import com.xiaohub.constants.HttpResponseWrapper;
-import com.xiaohub.util.HttpUtil;
+import com.xiaohub.util.HttpRequestUtil;
 import com.xiaohub.util.MD5Util;
 import com.xiaohub.util.RandomGenerator;
 import org.slf4j.Logger;
@@ -37,13 +37,13 @@ public class BaiDuTranslateApi {
                 "sign", sign
         );
 
-        HttpResponseWrapper response = HttpUtil.sendPostRequest(BAIDU_TRANSLATE_API, params, ContentType.URL_ENCODED.getMimeType());
+        HttpResponseWrapper response = HttpRequestUtil.sendPostRequest(BAIDU_TRANSLATE_API, params, ContentType.URL_ENCODED.getMimeType());
         int code = response.getCode();
 
         String resultText = "";
         if (code == 200) {
             JsonNode jsonNode = response.getJson();
-            log.info("jsonContent: {}", jsonNode);
+//            log.info("jsonContent: {}", jsonNode);
             resultText = jsonNode.get("trans_result").get(0).get("dst").asText();
         } else {
             log.error("Error Code: {}", code);

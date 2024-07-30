@@ -1,12 +1,10 @@
 package com.xiaohub.interactive.insight.initializer;
 
-import com.xiaohub.interactive.insight.handler.InsightHttpRequestHandler;
-import com.xiaohub.interactive.insight.handler.InsightWebSocketFrameHandler;
+import com.xiaohub.interactive.insight.handler.http.InsightHttpRequestHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
-import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
 
 public class InsightServerInitializer extends ChannelInitializer<SocketChannel> {
@@ -20,8 +18,8 @@ public class InsightServerInitializer extends ChannelInitializer<SocketChannel> 
         //  ChunkedWriteHandler: 用于异步写大的数据流（例如文件的内容）
         socketChannel.pipeline().addLast(new ChunkedWriteHandler());
         //  HttpRequestHandler 自定义的处理器，用于处理HTTP请求
-        socketChannel.pipeline().addLast(new WebSocketServerProtocolHandler("/ws"));
-        socketChannel.pipeline().addLast(new InsightWebSocketFrameHandler());
+//        socketChannel.pipeline().addLast(new WebSocketServerProtocolHandler("/ws"));
+//        socketChannel.pipeline().addLast(new InsightWebSocketFrameHandler());
         socketChannel.pipeline().addLast(new InsightHttpRequestHandler());
     }
 }

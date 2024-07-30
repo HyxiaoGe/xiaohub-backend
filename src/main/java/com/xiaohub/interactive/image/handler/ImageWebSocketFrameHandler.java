@@ -9,7 +9,7 @@ import com.xiaohub.interactive.image.dto.content.ImageContentDto;
 import com.xiaohub.interactive.image.dto.payload.ImagePayloadDto;
 import com.xiaohub.openapi.BaiDuTranslateApi;
 import com.xiaohub.util.AESUtil;
-import com.xiaohub.util.HttpUtil;
+import com.xiaohub.util.HttpRequestUtil;
 import com.xiaohub.util.JsonUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -89,7 +89,7 @@ public class ImageWebSocketFrameHandler extends SimpleChannelInboundHandler<WebS
                 HttpResponse httpResponse;
                 String contentText;
                 try {
-                    httpResponse = HttpUtil.proxyRequestOpenAI(awsProperties.getProxyUrl(), JsonUtil.toJson(imagePayloadDto), proxyUrl, apiKeys);
+                    httpResponse = HttpRequestUtil.proxyRequestOpenAI(awsProperties.getProxyUrl(), JsonUtil.toJson(imagePayloadDto), proxyUrl, apiKeys);
                 } catch (ConnectionTimeoutException e) {
                     contentText = JsonUtil.objectMapper.writeValueAsString(new BasicMessage(0, "errMsg", e.getMessage()));
                     channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(contentText));

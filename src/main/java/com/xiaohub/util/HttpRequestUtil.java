@@ -7,7 +7,6 @@ import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.conn.HttpHostConnectException;
@@ -32,11 +31,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class HttpUtil {
+public class HttpRequestUtil {
 
     private static final CloseableHttpClient httpClient = createClientAcceptsUntrustedCerts();
 
-    public static final Logger log = LoggerFactory.getLogger(HttpUtil.class);
+    public static final Logger log = LoggerFactory.getLogger(HttpRequestUtil.class);
 
     private static CloseableHttpClient createClientAcceptsUntrustedCerts() {
         try {

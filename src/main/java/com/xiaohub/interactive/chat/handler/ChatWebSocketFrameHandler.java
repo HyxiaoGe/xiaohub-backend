@@ -13,7 +13,7 @@ import com.xiaohub.interactive.chat.dto.message.TextMessageDto;
 import com.xiaohub.interactive.chat.dto.message.TextPayloadDto;
 import com.xiaohub.interactive.common.BasicMessage;
 import com.xiaohub.util.AESUtil;
-import com.xiaohub.util.HttpUtil;
+import com.xiaohub.util.HttpRequestUtil;
 import com.xiaohub.util.JsonUtil;
 import com.xiaohub.util.SensitiveWordUtil;
 import io.netty.channel.ChannelHandlerContext;
@@ -121,7 +121,7 @@ public class ChatWebSocketFrameHandler extends SimpleChannelInboundHandler<WebSo
         textPayloadDto.setMessages(textMessageDtos);
         HttpResponse httpResponse;
         try {
-            httpResponse = HttpUtil.proxyRequestOpenAI(awsProperties.getProxyUrl(), JsonUtil.toJson(textPayloadDto), proxyUrl, apiKeys);
+            httpResponse = HttpRequestUtil.proxyRequestOpenAI(awsProperties.getProxyUrl(), JsonUtil.toJson(textPayloadDto), proxyUrl, apiKeys);
         } catch (ConnectionTimeoutException e) {
             sendWebsocketResponse(context, ERROE_CODE, e.getMessage());
             return;

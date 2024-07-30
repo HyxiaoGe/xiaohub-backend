@@ -1,4 +1,4 @@
-package com.xiaohub.interactive.insight.handler;
+package com.xiaohub.interactive.insight.handler.websocket;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xiaohub.interactive.common.BasicMessage;
@@ -43,6 +43,7 @@ public class InsightWebSocketFrameHandler extends SimpleChannelInboundHandler<We
     }
 
     public static void broadcastUpdate(String msg) throws JsonProcessingException {
+        log.info("{} new data update!!!", msg);
         TextWebSocketFrame response = new TextWebSocketFrame(JsonUtil.objectMapper.writeValueAsString(new BasicMessage(0, "update", msg)));
         for (Channel ctx : channels) {
             ctx.writeAndFlush(response.duplicate().retain());

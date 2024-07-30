@@ -4,9 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xiaohub.constants.HttpResponseWrapper;
 import com.xiaohub.constants.Platform;
 import com.xiaohub.datadigger.dto.Article;
-import com.xiaohub.interactive.insight.handler.InsightWebSocketFrameHandler;
+import com.xiaohub.interactive.insight.handler.websocket.InsightWebSocketFrameHandler;
+import com.xiaohub.interactive.insight.model.PlatformUpdateStatus;
 import com.xiaohub.properties.AWSProperties;
-import com.xiaohub.util.HttpUtil;
+import com.xiaohub.util.HttpRequestUtil;
 import com.xiaohub.util.JsonUtil;
 import com.xiaohub.util.RedisUtil;
 import com.xiaohub.util.ThreadPoolUtil;
@@ -59,16 +60,14 @@ public class DataAgent {
             Map<String, String> params = new HashMap<>();
             params.put("platform", platform);
 //            HttpResponseWrapper httpResponse = HttpUtil.sendGetRequest("http://localhost:5000/articles", params);
-            HttpResponseWrapper httpResponse = HttpUtil.sendGetRequest(awsProperties.getDatadiggerUrl(), params);
+            HttpResponseWrapper httpResponse = HttpRequestUtil.sendGetRequest(awsProperties.getDatadiggerUrl(), params);
             int code = httpResponse.getCode();
             if (code == 200) {
                 try {
                     log.info("{} fetch data...", platform);
                     List<Article> articles = JsonUtil.objectMapper.treeToValue(httpResponse.getJson(), JsonUtil.objectMapper.getTypeFactory().constructCollectionType(List.class, Article.class));
                     boolean hasNewItem = RedisUtil.saveList(REDIS_KEY + platform, articles, Article.class);
-                    if (hasNewItem) {
-                        InsightWebSocketFrameHandler.broadcastUpdate(platform);
-                    }
+                    PlatformUpdateStatus.setUpdateStatus(platform, hasNewItem);
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException(e);
                 }
