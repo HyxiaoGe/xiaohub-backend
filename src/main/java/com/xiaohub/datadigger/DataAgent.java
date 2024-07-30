@@ -31,8 +31,10 @@ public class DataAgent {
 
     static {
         PLATFORM_LIST.add(Platform.KR_36.getPlatform());
-        PLATFORM_LIST.add(Platform.CHAPING.getPlatform());
-        PLATFORM_LIST.add(Platform.ALIRESEARCH.getPlatform());
+        PLATFORM_LIST.add(Platform.ZAOBAO.getPlatform());
+        PLATFORM_LIST.add(Platform.OEEEE.getPlatform());
+        PLATFORM_LIST.add(Platform.CHLINLEARN.getPlatform());
+        PLATFORM_LIST.add(Platform.DEEPLEARNING.getPlatform());
 
         scheduleFetchTask();
     }
@@ -59,7 +61,7 @@ public class DataAgent {
         for (String platform : PLATFORM_LIST) {
             Map<String, String> params = new HashMap<>();
             params.put("platform", platform);
-//            HttpResponseWrapper httpResponse = HttpUtil.sendGetRequest("http://localhost:5000/articles", params);
+//            HttpResponseWrapper httpResponse = HttpRequestUtil.sendGetRequest("http://localhost:5000/articles", params);
             HttpResponseWrapper httpResponse = HttpRequestUtil.sendGetRequest(awsProperties.getDatadiggerUrl(), params);
             int code = httpResponse.getCode();
             if (code == 200) {
@@ -67,7 +69,10 @@ public class DataAgent {
                     log.info("{} fetch data...", platform);
                     List<Article> articles = JsonUtil.objectMapper.treeToValue(httpResponse.getJson(), JsonUtil.objectMapper.getTypeFactory().constructCollectionType(List.class, Article.class));
                     boolean hasNewItem = RedisUtil.saveList(REDIS_KEY + platform, articles, Article.class);
-                    PlatformUpdateStatus.setUpdateStatus(platform, hasNewItem);
+                    if (hasNewItem) {
+                        log.info("Detect {} has updated content", platform);
+                        PlatformUpdateStatus.setUpdateStatus(platform, true);
+                    }
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException(e);
                 }
