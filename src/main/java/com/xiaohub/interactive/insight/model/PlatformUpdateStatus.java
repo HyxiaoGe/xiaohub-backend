@@ -7,8 +7,8 @@ public class PlatformUpdateStatus {
 
     private static final Map<String, Boolean> updatesMap = new ConcurrentHashMap<>();
 
-    public static void setUpdateStatus(String platform, boolean hasNewData) {
-        updatesMap.put(platform, hasNewData);
+    public static void setUpdateStatus(String platform, boolean isUpdate) {
+        updatesMap.put(platform, isUpdate);
     }
 
     public static Map<String, Boolean> getAllStatus() {
