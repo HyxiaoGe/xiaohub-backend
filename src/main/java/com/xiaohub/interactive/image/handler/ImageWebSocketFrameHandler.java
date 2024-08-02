@@ -19,6 +19,7 @@ import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,12 +88,10 @@ public class ImageWebSocketFrameHandler extends SimpleChannelInboundHandler<WebS
                 String proxyUrl = openAIProperties.getProxyUrl() + "/v1/images/generations";
 
                 HttpResponse httpResponse;
-                String contentText;
                 try {
                     httpResponse = HttpRequestUtil.proxyRequestOpenAI(awsProperties.getProxyUrl(), JsonUtil.toJson(imagePayloadDto), proxyUrl, apiKeys);
                 } catch (ConnectionTimeoutException e) {
-                    contentText = JsonUtil.objectMapper.writeValueAsString(new BasicMessage(0, "errMsg", e.getMessage()));
-                    channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(contentText));
+                    sendMessage(channelHandlerContext, "errMsg", e.getMessage(), false);
                     return;
                 }
                 int statusCode = httpResponse.getStatusLine().getStatusCode();
@@ -102,32 +101,44 @@ public class ImageWebSocketFrameHandler extends SimpleChannelInboundHandler<WebS
                     if (!imageContentDto.getData().isEmpty()) {
                         ImageContentDto.DataItem dataItem = imageContentDto.getData().get(0);
                         String revisedPrompt = dataItem.getRevisedPrompt();
-//                        log.info("revisedPrompt: {}", revisedPrompt);
-                        String resultText = BaiDuTranslateApi.translate(revisedPrompt);
                         String imgUrl = dataItem.getUrl();
-                        contentText = JsonUtil.objectMapper.writeValueAsString(new BasicMessage(0, "image", imgUrl));
-                        channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(contentText));
-                        for (int i = 0; i < resultText.length(); i++) {
-                            String chunk = resultText.substring(i, Math.min(i + 1, resultText.length()));
-                            contentText = JsonUtil.objectMapper.writeValueAsString(new BasicMessage(0, "text", chunk));
-                            channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(contentText));
-                            Thread.sleep(50);
-                        }
-                        contentText = JsonUtil.objectMapper.writeValueAsString(new BasicMessage(0, "text", "[DONE]"));
-                        channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(contentText));
+                        sendMessage(channelHandlerContext, "image", imgUrl, false);
+                        String resultText = BaiDuTranslateApi.translate(revisedPrompt);
+                        sendMessage(channelHandlerContext, "text", resultText, true);
                     }
                 } else {
                     String responseEntity = EntityUtils.toString(httpResponse.getEntity(), "UTF-8");
                     String errMsg = JsonUtil.readObject(responseEntity).get("error").asText();
                     if (statusCode == 429 || ("Request failed with status code 429").equals(errMsg)) {
-                        contentText = JsonUtil.objectMapper.writeValueAsString(new BasicMessage(0, "errMsg", "当前图片生成过快，请稍后重试！！！"));
-                        channelHandlerContext.channel().writeAndFlush(new TextWebSocketFrame(contentText));
+                        sendMessage(channelHandlerContext, "text", "当前图片生成过快，请稍后重试！！！", true);
+                    } else if (statusCode == HttpStatus.SC_BAD_REQUEST && "content_policy_violation".equals(JsonUtil.readObject(responseEntity).get("error").get("code").asText())) {
+                        sendMessage(channelHandlerContext, "text", "当前图片生成失败，OpenAI 不支持当前图片生成！！！", true);
                     } else {
                         log.error("Error: HTTP Status Code: {}", statusCode);
                         log.error("Error Details: {}", errMsg);
                     }
                 }
             }
+        }
+    }
+
+    private void sendMessage(ChannelHandlerContext ctx, String type, String message, boolean splitByChar) {
+        try {
+            if (splitByChar) {
+                for (int i = 0; i < message.length(); i++) {
+                    String chunk = message.substring(i, Math.min(i + 1, message.length()));
+                    String contentText = JsonUtil.objectMapper.writeValueAsString(new BasicMessage(0, type, chunk));
+                    ctx.channel().writeAndFlush(new TextWebSocketFrame(contentText));
+                    Thread.sleep(50);
+                }
+                String doneMessage = JsonUtil.objectMapper.writeValueAsString(new BasicMessage(0, "text", "[DONE]"));
+                ctx.channel().writeAndFlush(new TextWebSocketFrame(doneMessage));
+            } else {
+                String contentText = JsonUtil.objectMapper.writeValueAsString(new BasicMessage(0, type, message));
+                ctx.channel().writeAndFlush(new TextWebSocketFrame(contentText));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
