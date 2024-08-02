@@ -1,4 +1,4 @@
-package com.xiaohub.interactive.common;
+package com.xiaohub.interactive.common.model;
 
 public class BasicMessage {
 

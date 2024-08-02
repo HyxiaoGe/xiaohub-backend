@@ -1,7 +1,6 @@
 package com.xiaohub.interactive.chat.initializer;
 
 import com.xiaohub.interactive.chat.handler.ChatWebSocketFrameHandler;
-import com.xiaohub.interactive.chat.handler.ExceptionHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
@@ -32,5 +31,7 @@ public class ChatServerInitializer extends ChannelInitializer<SocketChannel> {
 //        socketChannel.pipeline().addLast(new ExceptionHandler());
         //  WebSocketFrameHandler 自定义的处理器，用于处理WebSocket
         socketChannel.pipeline().addLast(new ChatWebSocketFrameHandler());
+//        socketChannel.pipeline().addLast(new IpConnectionLimitHandler(5));
+//        socketChannel.pipeline().addLast(new TokenBucketLimiter(5));
     }
 }

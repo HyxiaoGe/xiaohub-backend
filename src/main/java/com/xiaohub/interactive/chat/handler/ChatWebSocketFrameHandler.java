@@ -11,7 +11,7 @@ import com.xiaohub.interactive.chat.dto.content.ImageUrl;
 import com.xiaohub.interactive.chat.dto.content.TextChatContentDto;
 import com.xiaohub.interactive.chat.dto.message.TextMessageDto;
 import com.xiaohub.interactive.chat.dto.message.TextPayloadDto;
-import com.xiaohub.interactive.common.BasicMessage;
+import com.xiaohub.interactive.common.model.BasicMessage;
 import com.xiaohub.util.AESUtil;
 import com.xiaohub.util.HttpRequestUtil;
 import com.xiaohub.util.JsonUtil;

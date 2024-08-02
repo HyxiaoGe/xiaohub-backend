@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.xiaohub.properties.AWSProperties;
 import com.xiaohub.properties.OpenAIProperties;
 import com.xiaohub.exception.ConnectionTimeoutException;
-import com.xiaohub.interactive.common.BasicMessage;
+import com.xiaohub.interactive.common.model.BasicMessage;
 import com.xiaohub.interactive.image.dto.content.ImageContentDto;
 import com.xiaohub.interactive.image.dto.payload.ImagePayloadDto;
 import com.xiaohub.openapi.BaiDuTranslateApi;

@@ -1,7 +1,7 @@
 package com.xiaohub.interactive.insight.handler.websocket;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.xiaohub.interactive.common.BasicMessage;
+import com.xiaohub.interactive.common.model.BasicMessage;
 import com.xiaohub.util.JsonUtil;
 import io.netty.channel.Channel;
 import io.netty.channel.SimpleChannelInboundHandler;
