@@ -1,5 +1,6 @@
 package com.xiaohub.interactive.image.initializer;
 
+import com.xiaohub.interactive.common.handler.IpBasedTokenBucketLimiter;
 import com.xiaohub.interactive.image.handler.ImageWebSocketFrameHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
@@ -22,5 +23,6 @@ public class ImageServerInitializer extends ChannelInitializer<SocketChannel> {
         socketChannel.pipeline().addLast(new WebSocketServerProtocolHandler("/ws",  null, true, 262144));
         //  WebSocketFrameHandler 自定义的处理器，用于处理WebSocket
         socketChannel.pipeline().addLast(new ImageWebSocketFrameHandler());
+        socketChannel.pipeline().addLast(new IpBasedTokenBucketLimiter(10, 5, 1));
     }
 }
