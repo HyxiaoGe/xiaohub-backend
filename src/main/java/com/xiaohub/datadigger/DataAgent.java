@@ -61,12 +61,12 @@ public class DataAgent {
         for (String platform : PLATFORM_LIST) {
             Map<String, String> params = new HashMap<>();
             params.put("platform", platform);
+            log.info("{} fetch data...", platform);
 //            HttpResponseWrapper httpResponse = HttpRequestUtil.sendGetRequest("http://localhost:5000/articles", params);
             HttpResponseWrapper httpResponse = HttpRequestUtil.sendGetRequest(awsProperties.getDatadiggerUrl(), params);
             int code = httpResponse.getCode();
             if (code == 200) {
                 try {
-                    log.info("{} fetch data...", platform);
                     List<Article> articles = JsonUtil.objectMapper.treeToValue(httpResponse.getJson(), JsonUtil.objectMapper.getTypeFactory().constructCollectionType(List.class, Article.class));
                     boolean hasNewItem = RedisUtil.saveList(REDIS_KEY + platform, articles, Article.class);
                     if (hasNewItem) {
