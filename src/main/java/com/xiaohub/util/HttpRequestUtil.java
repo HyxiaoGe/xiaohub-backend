@@ -43,7 +43,7 @@ public class HttpRequestUtil {
             SSLContext sslContext = SSLContexts.custom().loadTrustMaterial(null, acceptingTrustStrategy).build();
 
             // 配置请求的超时设置
-            RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(60000).setSocketTimeout(60000).setConnectionRequestTimeout(60000).build();
+            RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(5 * 60000).setSocketTimeout(5 * 60000).setConnectionRequestTimeout(5 * 60000).build();
 
 //            HttpHost proxy = new HttpHost("127.0.0.1", 7890);
 //            DefaultProxyRoutePlanner routePlanner = new DefaultProxyRoutePlanner(proxy);
