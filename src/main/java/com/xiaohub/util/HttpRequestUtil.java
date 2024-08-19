@@ -7,8 +7,10 @@ import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.conn.HttpHostConnectException;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.TrustStrategy;
@@ -24,7 +26,10 @@ import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLContext;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -43,7 +48,7 @@ public class HttpRequestUtil {
             SSLContext sslContext = SSLContexts.custom().loadTrustMaterial(null, acceptingTrustStrategy).build();
 
             // 配置请求的超时设置
-            RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(5 * 60000).setSocketTimeout(5 * 60000).setConnectionRequestTimeout(5 * 60000).build();
+            RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(60000).setSocketTimeout(60000).setConnectionRequestTimeout(60000).build();
 
 //            HttpHost proxy = new HttpHost("127.0.0.1", 7890);
 //            DefaultProxyRoutePlanner routePlanner = new DefaultProxyRoutePlanner(proxy);
@@ -75,7 +80,7 @@ public class HttpRequestUtil {
             } catch (SocketTimeoutException e) {
                 if (attemptCount < maxAttempt) {
                     attemptCount++;
-                    log.warn("请求超时，正在重试， 当前重试次数:{}/{}", attemptCount, maxAttempt);
+                    log.warn("directRequestOpenAI 请求超时，正在重试， 当前重试次数:{}/{}", attemptCount, maxAttempt);
                 } else {
                     throw new RuntimeException(e);
                 }
@@ -160,20 +165,35 @@ public class HttpRequestUtil {
         if (params != null && !params.isEmpty()) {
             urlWithParams.append("?");
             for (Map.Entry<String, String> entry : params.entrySet()) {
-                urlWithParams.append(entry.getKey()).append("=").append(entry.getValue()).append("&");
+                urlWithParams.append(entry.getKey()).append("=").append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8)).append("&");
             }
             urlWithParams.setLength(urlWithParams.length() - 1);
         }
-
         HttpGet httpGet = new HttpGet(urlWithParams.toString());
 
-        try {
-            HttpResponse httpResponse = httpClient.execute(httpGet);
-            return new HttpResponseWrapper(httpResponse);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        int maxAttempts = 3;
+        int attempts = 0;
+        IOException lastException = null;
+
+        while (attempts < maxAttempts) {
+            try {
+                HttpResponse httpResponse = httpClient.execute(httpGet);
+                return new HttpResponseWrapper(httpResponse);
+            } catch (IOException e) {
+                lastException = e;
+                attempts++;
+                if (attempts >= maxAttempts) {
+                    break; // 超出重试次数，停止重试
+                }
+                try {
+                    Thread.sleep(2000); // 简单的线程休眠，等待2秒后重试
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt(); // 恢复中断状态
+                }
+            }
         }
 
+        throw new RuntimeException("Failed to complete the request after " + maxAttempts + " attempts", lastException);
     }
 
 }

@@ -61,6 +61,13 @@ public class RedisUtil {
         }
     }
 
+    public static Map<String, String> getHashAll(String name) {
+        try (Jedis jedis = jedisPool.getResource()) {
+            return jedis.hgetAll(name);
+        }
+    }
+
+
     public static long decrement(String key, long delta) {
         return increment(key, -delta);
     }
