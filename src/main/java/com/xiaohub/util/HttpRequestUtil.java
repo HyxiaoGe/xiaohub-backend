@@ -169,31 +169,16 @@ public class HttpRequestUtil {
             }
             urlWithParams.setLength(urlWithParams.length() - 1);
         }
+
         HttpGet httpGet = new HttpGet(urlWithParams.toString());
 
-        int maxAttempts = 3;
-        int attempts = 0;
-        IOException lastException = null;
-
-        while (attempts < maxAttempts) {
-            try {
-                HttpResponse httpResponse = httpClient.execute(httpGet);
-                return new HttpResponseWrapper(httpResponse);
-            } catch (IOException e) {
-                lastException = e;
-                attempts++;
-                if (attempts >= maxAttempts) {
-                    break; // 超出重试次数，停止重试
-                }
-                try {
-                    Thread.sleep(2000); // 简单的线程休眠，等待2秒后重试
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt(); // 恢复中断状态
-                }
-            }
+        try {
+            HttpResponse httpResponse = httpClient.execute(httpGet);
+            return new HttpResponseWrapper(httpResponse);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
 
-        throw new RuntimeException("Failed to complete the request after " + maxAttempts + " attempts", lastException);
     }
 
 }

@@ -1,10 +1,8 @@
 package com.xiaohub.datadigger;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.xiaohub.constants.HttpResponseWrapper;
 import com.xiaohub.constants.Platform;
 import com.xiaohub.datadigger.dto.Article;
-import com.xiaohub.interactive.insight.model.PlatformStatus;
 import com.xiaohub.properties.AWSProperties;
 import com.xiaohub.util.HttpRequestUtil;
 import com.xiaohub.util.JsonUtil;
@@ -13,7 +11,6 @@ import com.xiaohub.util.ThreadPoolUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,9 +21,8 @@ public class DataAgent {
 
     public static final Logger log = LoggerFactory.getLogger(DataAgent.class);
 
-    private static final String ARTICLES_KEY = "articles-";
-
-    private static final String UPDATES_STATUS_KEY = "updates_status-";
+    private static final String ARTICLES_KEY_PREFIX = "articles_by_platform:";
+    private static final String UPDATES_STATUS_KEY_PREFIX = "status_updates_by_platform";
 
     private static AWSProperties awsProperties = new AWSProperties();
 
@@ -81,7 +77,7 @@ public class DataAgent {
             int code = httpResponse.getCode();
             if (code == 200) {
                 List<Article> articles = JsonUtil.objectMapper.treeToValue(httpResponse.getJson(), JsonUtil.objectMapper.getTypeFactory().constructCollectionType(List.class, Article.class));
-                boolean hasNewItem = RedisUtil.saveList(ARTICLES_KEY + platform, articles, Article.class);
+                boolean hasNewItem = RedisUtil.saveList(ARTICLES_KEY_PREFIX + platform, articles, Article.class);
                 platformUpdates.put(platform, hasNewItem);
 
                 return true;
@@ -98,37 +94,15 @@ public class DataAgent {
 
     private static void updatePlatformStatus(String platform, Boolean hasNewItem) {
         if (hasNewItem) {
-            long currentTime = System.currentTimeMillis() / 1000;
-            Map<String, Object> status = new HashMap<>();
-            status.put("timestamp", currentTime);
-            status.put("updated", true);
-
-            try {
-                RedisUtil.setHashValue(UPDATES_STATUS_KEY, platform, JsonUtil.objectMapper.writeValueAsString(status));
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-            log.info("Updated {} status in Redis with timestamp {}", platform, currentTime);
+            long currentTimeStamp = System.currentTimeMillis() / 1000;
+            RedisUtil.setHashValue(UPDATES_STATUS_KEY_PREFIX, platform, String.valueOf(currentTimeStamp));
+            log.info("Updated {} status in Redis with timestamp {}", platform, currentTimeStamp);
         }
     }
 
-    public static Map<String, PlatformStatus> getAllStatus() {
-        // 从Redis获取所有平台的更新状态
-        Map<String, String> statusMap = RedisUtil.getHashAll(UPDATES_STATUS_KEY);
-        Map<String, PlatformStatus> platformStatusMap = new HashMap<>();
-
-        for (Map.Entry<String, String> entry : statusMap.entrySet()) {
-            try {
-                PlatformStatus status = JsonUtil.objectMapper.readValue(entry.getValue(), PlatformStatus.class);
-                platformStatusMap.put(entry.getKey(), status);
-            } catch (IOException e) {
-                log.error("Error parsing platform status for key {}: {}", entry.getKey(), e.getMessage());
-            }
-        }
-
-        return platformStatusMap;
+    public static Map<String, String> getAllPlatformStatus() {
+        return RedisUtil.getHashAll(ARTICLES_KEY_PREFIX);
     }
-
 
     public static List<Article> retrieve(String platform) {
         int stop;
@@ -137,7 +111,7 @@ public class DataAgent {
         } else {
             stop = 19;
         }
-        return RedisUtil.getList(ARTICLES_KEY + platform, Article.class, 0, stop);
+        return RedisUtil.getList(ARTICLES_KEY_PREFIX + platform, Article.class, 0, stop);
     }
 
 }
