@@ -22,7 +22,7 @@ public class DataAgent {
     public static final Logger log = LoggerFactory.getLogger(DataAgent.class);
 
     private static final String ARTICLES_KEY_PREFIX = "articles_by_platform:";
-    private static final String UPDATES_STATUS_KEY_PREFIX = "status_updates_by_platform";
+    private static final String PLATFORM_UPDATES_KEY = "platformUpdates";
 
     private static AWSProperties awsProperties = new AWSProperties();
 
@@ -95,13 +95,13 @@ public class DataAgent {
     private static void updatePlatformStatus(String platform, Boolean hasNewItem) {
         if (hasNewItem) {
             long currentTimeStamp = System.currentTimeMillis() / 1000;
-            RedisUtil.setHashValue(UPDATES_STATUS_KEY_PREFIX, platform, String.valueOf(currentTimeStamp));
+            RedisUtil.setHashValue(PLATFORM_UPDATES_KEY, platform, String.valueOf(currentTimeStamp));
             log.info("Updated {} status in Redis with timestamp {}", platform, currentTimeStamp);
         }
     }
 
     public static Map<String, String> getAllPlatformStatus() {
-        return RedisUtil.getHashAll(ARTICLES_KEY_PREFIX);
+        return RedisUtil.getHashAll(PLATFORM_UPDATES_KEY);
     }
 
     public static List<Article> retrieve(String platform) {
